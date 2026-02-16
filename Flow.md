@@ -1,5 +1,5 @@
 ```mermaid
-flowchart LR #create a flow diagram
+flowchart LR
    subgraph Customer_Side
        A[Customer Network]
    end
@@ -17,3 +17,4 @@ flowchart LR #create a flow diagram
    A --> B --> C --> D --> E --> F --> G --> H
 
 ```
+
