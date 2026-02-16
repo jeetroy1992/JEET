@@ -9,6 +9,7 @@
 <pre><code>HDR   = Internet Key Exchange (IKE) Header = Who I am / Message envelope
 SK    = Encrypted and Integrity-Protected Payload inside HDR
 IDi   = Identification – Initiator
+KEi = Key Exchange-Initiator’s Diffie–Hellman public key.Used to generate a shared secret key between CUSTOMER and SAP
 AUTH  = Authentication Payload = Proof I know PSK
 SAi2  = Security Association – Initiator (CHILD SA / Phase-2) = Data encryption rules
 TSi   = Traffic Selector – Initiator = Which subnets to encrypt
