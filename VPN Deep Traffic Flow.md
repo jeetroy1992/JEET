@@ -15,22 +15,55 @@ TSi   = Traffic Selector – Initiator = Which subnets to encrypt
 TSr   = Traffic Selector – Responder = Which subnets to encrypt
 
 IDi + AUTH → Trust built
+Identity + successful authentication = verified peer.
+Once trust is validated, encrypted negotiation can continue.
+
 Trust → Data tunnel allowed
+Only after mutual authentication will IPsec SAs be created.
+This prevents unauthorized or spoofed tunnel creation.
 
 Internet        → carries IPsec
+The public internet transports IKE/ESP packets.
+Only outer headers are visible; inner data stays encrypted.
+
 Tunnel          → carries routing
+The IPsec tunnel acts like a secure virtual link between sites.
+Dynamic routing protocols travel inside it.
+
 BGP             → carries prefixes
+BGP exchanges routes to remote networks through the IPsec tunnel.
+This decides how traffic flows between the two sites.
+
 ESP             → protects data
+ESP = Encapsulating Security Payload, Protocol = 50
+ESP encrypts, authenticates, and secures actual payload traffic.
+Everything inside ESP is unreadable to intermediaries.
 
 Policy-based VPN = ACL selects traffic
-Route-based VPN  = Routing selects traffic
+Traffic is matched against ACL rules to determine what enters the tunnel.
+More static and suited for simple point-to-point connections.
 
-SPI = Security Parameter Index, Used to select correct IPsec SA, a label attached to every ESP packet
-ESP = Encapsulating Security Payload, Protocol = 50
-BGP OVER IPsec = BGP runs inside tunnel, TCP 179 is encrypted, Routes decide data flow, Tunnel interface exists
+Route-based VPN  = Routing selects traffic
+A virtual tunnel interface is used, and routing decides traffic flow.
+Supports BGP, multiple networks, and flexible topologies.
+
+SPI = Security Parameter Index
+A 32‑bit label used to identify the correct IPsec SA.
+Every ESP packet includes an SPI for fast lookup.
+Different SPIs exist for each direction.
+
+BGP OVER IPsec 
+BGP runs inside the tunnel, securing TCP 179.
+Provides dynamic route exchange between sites.
+Ideal for multi‑network or redundant designs.
 
 Time-based rekey   = After lifetime expiry
+Triggers after configured SA lifetime expiring (e.g., 3600s).
+Ensures keys are refreshed periodically for better security.
+
 Volume-based rekey = After data threshold
+Triggered after a data threshold (MB/GB) is crossed.
+Prevents excessive data exposure under a single key.
 
 NAT present → ESP in UDP 4500
 No NAT     → ESP directly
