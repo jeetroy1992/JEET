@@ -7,17 +7,11 @@
 flowchart LR
   A([Start]) --> B[Open configlets.yml]
   B --> C{Device entry found?}
-  C -- Yes --> D[Delete device lines<br/>- sw-hec10-hvv-02a<br/>- sw-hec10-hvv-02b]
-  C -- No --> H([End])
+  C -->|Yes| D[Delete device lines - sw-hec10-hvv-02a - sw-hec10-hvv-02b]
+  C -->|No| H([End])
   D --> E[Save file]
   E --> F[Commit and push if using Git]
   F --> H([End])
-
-  %% colored classes
-  classDef step fill:#E6F4FF,stroke:#1b66c9,stroke-width:1px,color:#0b3d91;
-  classDef action fill:#E8F5E9,stroke:#2e7d32,stroke-width:1px,color:#1b5e20;
-  class A,B,C,H step;
-  class D,E,F action;
 ```
 
 #### 2) HEC DC → hvv.yml → Search device and remove full config block
@@ -26,21 +20,15 @@ flowchart LR
 flowchart TB
   A([Start]) --> B[Open hvv.yml]
   B --> C{Device id present?}
-  C -- Yes --> D[Select entire device block<br/>interfaces vlans mlag evpn etc]
-  C -- No --> J([End])
+  C -->|Yes| D[Select entire device block - interfaces vlans mlag evpn etc]
+  C -->|No| J([End])
   D --> E[Remove device block]
-  E --> F[Validate YAML syntax<br/>yamllint or CI]
+  E --> F[Validate YAML syntax - yamllint or CI]
   F --> G{Validation ok?}
-  G -- Yes --> H[Save commit push]
-  G -- No --> I[Fix indentation or keys<br/>revalidate]
+  G -->|Yes| H[Save commit push]
+  G -->|No| I[Fix indentation or keys - revalidate]
   I --> F
   H --> J([End])
-
-  %% colored classes
-  classDef step fill:#FFF8E1,stroke:#ff8f00,stroke-width:1px,color:#8a6d00;
-  classDef action fill:#F3E5F5,stroke:#6a1b9a,stroke-width:1px,color:#4a148c;
-  class A,B,C,J step;
-  class D,E,F,H,I action;
 ```
 
 </details>
