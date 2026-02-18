@@ -9,7 +9,7 @@ flowchart LR
    end
    subgraph SAP_Environment
        D[SAP Internet Router pair]
-       E[PE(VPN|WAN Routers]
+       E[PE Routers]
        F[Load Balancer]
        G[CGS]
        H[Customer VM]
@@ -17,6 +17,7 @@ flowchart LR
    A --> B --> C --> D --> E --> F --> G --> H
 
 ```
+
 
 
 
