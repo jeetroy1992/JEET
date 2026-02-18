@@ -5,30 +5,45 @@
 
 ```mermaid
 flowchart LR
-  A([Start]) --> B[Open configlets.yml]
-  B --> C{Device entry found?}
-  C -->|Yes| D[Delete device lines - sw-hec10-hvv-02a - sw-hec10-hvv-02b]
-  C -->|No| H([End])
-  D --> E[Save file]
-  E --> F[Commit and push if using Git]
-  F --> H([End])
+   subgraph Customer_Side
+       A[Customer Network]
+   end
+   subgraph Internet_Zone
+       B[Internet]
+       C[NIE / DIBS]
+   end
+   subgraph SAP_Environment
+       D[SAP Internet Router]
+       E[VPN Router]
+       F[Load Balancer]
+       G[CGS]
+       H[Customer VM]
+   end
+   A --> B --> C --> D --> E --> F --> G --> H
+
+```
 ```
 
 #### 2) HEC DC → hvv.yml → Search device and remove full config block
 
 ```mermaid
-flowchart TB
-  A([Start]) --> B[Open hvv.yml]
-  B --> C{Device id present?}
-  C -->|Yes| D[Select entire device block - interfaces vlans mlag evpn etc]
-  C -->|No| J([End])
-  D --> E[Remove device block]
-  E --> F[Validate YAML syntax - yamllint or CI]
-  F --> G{Validation ok?}
-  G -->|Yes| H[Save commit push]
-  G -->|No| I[Fix indentation or keys - revalidate]
-  I --> F
-  H --> J([End])
+flowchart LR
+   subgraph Customer_Side
+       A[Customer Network]
+   end
+   subgraph Internet_Zone
+       B[Internet]
+       C[NIE / DIBS]
+   end
+   subgraph SAP_Environment
+       D[SAP Internet Router]
+       E[VPN Router]
+       F[Load Balancer]
+       G[CGS]
+       H[Customer VM]
+   end
+   A --> B --> C --> D --> E --> F --> G --> H
+
 ```
 
 </details>
