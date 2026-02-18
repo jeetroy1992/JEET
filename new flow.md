@@ -1,3 +1,4 @@
+```mermaid
 flowchart LR
 
 %% ===========================
@@ -36,5 +37,7 @@ BL --> WAN
 %% Convergence
 VPN --> F
 WAN --> F
+
+```
 
 F --> G --> H
