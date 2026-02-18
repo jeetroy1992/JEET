@@ -11,12 +11,13 @@ flowchart LR
        D[SAP Internet Router pair]
        E[PE Routers]
        F[Load Balancer]
-       G[CGS]
+       G[CGS .254]
        H[Customer VM]
    end
    A --> B --> C --> D --> E --> F --> G --> H
 
 ```
+
 
 
 
