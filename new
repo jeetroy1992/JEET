@@ -1,3 +1,8 @@
+<details>
+<summary>🔷 Arista DECOM Manual Process</summary>
+
+#### 1) HEC DC → configlets.yml → Remove decom device entry
+
 ```mermaid
 flowchart LR
   A([Start]) --> B[Open configlets.yml]
@@ -14,4 +19,28 @@ flowchart LR
   class A,B,C,H step;
   class D,E,F action;
 ```
-``
+
+#### 2) HEC DC → hvv.yml → Search device and remove full config block
+
+```mermaid
+flowchart TB
+  A([Start]) --> B[Open hvv.yml]
+  B --> C{Device id present?}
+  C -- Yes --> D[Select entire device block<br/>interfaces vlans mlag evpn etc]
+  C -- No --> J([End])
+  D --> E[Remove device block]
+  E --> F[Validate YAML syntax<br/>yamllint or CI]
+  F --> G{Validation ok?}
+  G -- Yes --> H[Save commit push]
+  G -- No --> I[Fix indentation or keys<br/>revalidate]
+  I --> F
+  H --> J([End])
+
+  %% colored classes
+  classDef step fill:#FFF8E1,stroke:#ff8f00,stroke-width:1px,color:#8a6d00;
+  classDef action fill:#F3E5F5,stroke:#6a1b9a,stroke-width:1px,color:#4a148c;
+  class A,B,C,J step;
+  class D,E,F,H,I action;
+```
+
+</details>
