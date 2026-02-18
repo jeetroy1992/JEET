@@ -1,3 +1,4 @@
+```mermaid
 flowchart LR
    A[Customer Network]
    B[Internet]
@@ -14,3 +15,5 @@ flowchart LR
    C --> D
    C2 --> D
    D --> E --> F --> G --> H
+
+```
