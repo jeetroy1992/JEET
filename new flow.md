@@ -7,6 +7,7 @@ flowchart LR
 
 A[Customer Network]
 B[Internet]
+
 C[NIE]
 C2[DIBS]
 
@@ -25,6 +26,7 @@ H[Customer VM]
 
 A --> B
 B --> C & C2
+
 C --> INET
 C2 --> INET
 
@@ -38,4 +40,5 @@ BL --> WAN
 VPN --> F
 WAN --> F
 
+F --> G --> H
 ```
