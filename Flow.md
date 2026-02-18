@@ -8,8 +8,8 @@ flowchart LR
        C[NIE / DIBS]
    end
    subgraph SAP_Environment
-       D[SAP Internet Router]
-       E[PE(VPN/WAN Router]
+       D[SAP Internet Router pair]
+       E[PE(VPN|WAN Routers]
        F[Load Balancer]
        G[CGS]
        H[Customer VM]
@@ -17,5 +17,6 @@ flowchart LR
    A --> B --> C --> D --> E --> F --> G --> H
 
 ```
+
 
 
