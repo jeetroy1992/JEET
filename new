@@ -1,0 +1,17 @@
+```mermaid
+flowchart LR
+  A([Start]) --> B[Open configlets.yml]
+  B --> C{Device entry found?}
+  C -- Yes --> D[Delete device lines<br/>- sw-hec10-hvv-02a<br/>- sw-hec10-hvv-02b]
+  C -- No --> H([End])
+  D --> E[Save file]
+  E --> F[Commit and push if using Git]
+  F --> H([End])
+
+  %% colored classes
+  classDef step fill:#E6F4FF,stroke:#1b66c9,stroke-width:1px,color:#0b3d91;
+  classDef action fill:#E8F5E9,stroke:#2e7d32,stroke-width:1px,color:#1b5e20;
+  class A,B,C,H step;
+  class D,E,F action;
+```
+``
