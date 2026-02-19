@@ -187,9 +187,8 @@ should be added for a specific customer. In this example:
 | **VPN 01a router**                        | <span style="color:#3a8f3a;">10:3013</span> |                                | <span style="color:#c47f00;">10:3011</span><br/><span style="color:#bb3377;">10:3012</span> |                                  |
 | **VPN 01b router**                        |                                | <span style="color:#3a8f3a;">10:3013</span> |                                  | <span style="color:#c47f00;">10:3011</span><br/><span style="color:#bb3377;">10:3012</span> |
 
-%% =========================
-%%  VLAN Reservation Logic
-%% =========================
+
+- **VLAN Reservation Logic**
 
 Each DC has fixed VLAN blocks.
 Example:
