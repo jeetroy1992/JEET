@@ -8,6 +8,9 @@ SAP has cloud peering connection which doesn’t require any physical link of th
 
 The difference between MPLS and cloud peering is that both provide private or dedicated connectivity solutions for customers. However, the key difference is that with MPLS, the customer can bring their own device and connect the circuit end‑to‑end directly with the service provider, while cloud peering does not involve customer‑managed end‑to‑end circuits in the same way.
 
+Goal:
+On-prem network  ⇄  SAP HEC application subnet
+
 # Architecture Model
 
 There 3‑Domain Model
@@ -136,6 +139,45 @@ FAB --> VIP["LB‑VIP"]:::sap
 VIP --> APP["APP‑VM"]:::core
 
 ```
+Before any config, SAP must know:
+%% =========================
+%% Required WAN Questionnaire from customer
+%% =========================
+
+ Customer ID (CID) : XYZ
+ Customer name: XYZ COMPANY
+ Target HEC DC : HEC07
+ Customer ASN: 65010
+ Bandwidth : 200 Mbps
+ Primary peering subnet (/30 or /31)
+   Network: 10.21.52.12/30
+   SAP IP: 10.21.52.13
+   Customer IP: 10.21.52.14
+ Secondary peering subnet (/30 or /31)
+   Network: 10.21.52.16/30
+   SAP IP: 10.21.52.17
+   Customer IP: 10.21.52.18
+ Optional BGP MD5 password
+
+%% =========================
+%%  VLAN Reservation Logic
+%% =========================
+
+Each DC has fixed VLAN blocks.
+Example:
+Primary VLAN pool:   400–499
+Secondary VLAN pool: 500–599
+Engineer checks free VLANs.
+Example allocation:
+Primary VLAN:   401
+Secondary VLAN: 501
+
+Meaning:
+401 → Primary BGP link
+501 → Secondary BGP link
+________________________________________
+
+
 # High‑level workflow
 
 ```mermaid
