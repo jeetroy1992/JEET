@@ -8,7 +8,8 @@ SAP has cloud peering connection which doesn’t require any physical link of th
 
 The difference between MPLS and cloud peering is that both provide private or dedicated connectivity solutions for customers. However, the key difference is that with MPLS, the customer can bring their own device and connect the circuit end‑to‑end directly with the service provider, while cloud peering does not involve customer‑managed end‑to‑end circuits in the same way.
 
-** Architecture Model**
+# Architecture Model
+
 There 3‑Domain Model
 (1) Data Center Fabric (EVPN/VXLAN)
 -Hosts the workloads (HEC/S4/HANA)
@@ -41,7 +42,7 @@ flowchart TB
 
 ```
 
-** Architecture Overview**
+# Architecture Overview
 ```mermaid
 
 flowchart LR
