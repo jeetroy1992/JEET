@@ -348,8 +348,6 @@ encapsulation dot1Q 401
 vrf forwarding CUSTOMER_0201
 ip address 10.21.52.13 255.255.255.252
    ```
-This is the Primary L3 handoff for the customer — mapped to the Primary VLAN (401) and BGP primary peer.Converts each L2 VLAN into a routed L3 sub‑interface inside VRF CUSTOMER_0201.
-
 - Secondary link **SAP IP:**:
 ```java
 interface Port-channel20.501
@@ -357,6 +355,8 @@ encapsulation dot1Q 501
 vrf forwarding CUSTOMER_0201
 ip address 10.21.52.17 255.255.255.252
    ```
+- This is the **Primary & Secondary L3 handoff for the customer** — mapped to the Primary VLAN (401) and BGP primary peer.**Converts each L2 VLAN into a routed L3 sub‑interface inside VRF CUSTOMER_0201**.
+
 - Note: one primary (/30 ending .13), one secondary (/30 ending .17). **Each sub‑interface** forms an **independent eBGP peering** with the **customer/ISP side** for the cloud peering virtual circuit(s).
   
 # High‑level workflow
