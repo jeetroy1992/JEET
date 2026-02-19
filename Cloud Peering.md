@@ -1,3 +1,6 @@
+## Summary
+This document provides the complete reference architecture and a concrete runbook for SAP service connectivity
+
 # Cloud Peering
 The cloud pairing is a simple plug & play service which is equivalent to the the direct connect from AWS or maybe express route from Azure or maybe the Google Cloud interconnect from GCP. Example: interconnection ecosystem providers like Equinix and MegaPort.
 
