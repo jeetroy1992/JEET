@@ -13,27 +13,26 @@ On-prem network  ⇄  SAP HEC application subnet
 
 # Architecture Model
 
-There 3‑Domain Model
+There is a 3‑Domain Model:
 
-(1) Data Center Fabric (EVPN/VXLAN)
--Hosts the workloads (HEC/S4/HANA)
--Uses Anycast Gateway (10.x.x.1)
--EVPN Type‑5 advertises SAP subnet prefixes
--Ensures fast east‑west movement inside DC
+### (1) Data Center Fabric (EVPN/VXLAN)
+- Hosts workloads (HEC/S4/HANA)  
+- Uses Anycast Gateway (10.x.x.1)  
+- EVPN Type‑5 advertises SAP subnet prefixes  
+- Fast east‑west movement inside DC  
 
-(2) WAN/VPN Edge (CWAN)
-Termination of customer Cloud Peering connections
-VRF CUSTOMER_0XXX lives here
-Converts EVPN Type‑5 → VPNv4
-Attaches PRIO communities
-Adds Local‑Pref or AS‑Path prepend
+### (2) WAN/VPN Edge (CWAN)
+- Terminates customer Cloud Peering  
+- VRF CUSTOMER_0XXX  
+- Converts EVPN Type‑5 → VPNv4  
+- Attaches PRIO communities  
+- Adds Local‑Pref or AS‑Path prepend  
 
-(3) SAP ONE Backbone (MPLS Transport)
-Pure transport layer (PE → P → PE)
-No routing policy
-No VRF decisions in the P nodes
-Moves customer VRF traffic using labels
-Extremely scalable and predictable
+### (3) SAP ONE Backbone (MPLS Transport)
+- Pure transport layer (PE → P → PE)  
+- No routing policy  
+- No VRF decisions in P nodes  
+- Moves VRF traffic using labels 
 
 ```mermaid
 %% Mermaid table-like grid
@@ -140,24 +139,27 @@ VIP --> APP["APP‑VM"]:::core
 
 ```
 Before any config, SAP must know:
-%% =========================
-%% Required WAN Questionnaire from customer
-%% =========================
+# Required WAN Questionnaire
 
- Customer ID (CID) : XYZ
- Customer name: XYZ COMPANY
- Target HEC DC : HEC07
- Customer ASN: 65010
- Bandwidth : 200 Mbps
- Primary peering subnet (/30 or /31)
-   Network: 10.21.52.12/30
-   SAP IP: 10.21.52.13
-   Customer IP: 10.21.52.14
- Secondary peering subnet (/30 or /31)
-   Network: 10.21.52.16/30
-   SAP IP: 10.21.52.17
-   Customer IP: 10.21.52.18
- Optional BGP MD5 password
+Before any configuration, SAP must know:
+
+- **Customer ID (CID):** XYZ  
+- **Customer Name:** XYZ COMPANY  
+- **Target HEC DC:** HEC07  
+- **Customer ASN:** 65010  
+- **Bandwidth:** 200 Mbps  
+
+## Primary Peering Subnet (/30 or /31)
+- **Network:** 10.21.52.12/30  
+- **SAP IP:** 10.21.52.13  
+- **Customer IP:** 10.21.52.14
+
+## Secondary Peering Subnet (/30 or /31)
+- **Network:** 10.21.52.16/30  
+- **SAP IP:** 10.21.52.17  
+- **Customer IP:** 10.21.52.18
+
+**Optional:** BGP MD5 password
 
 %% =========================
 %%  VLAN Reservation Logic
