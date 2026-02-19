@@ -205,6 +205,7 @@ should be added for a specific customer. In this example:
 | **VPN 01a router**                        | <span style="color:#3a8f3a;">10:3013</span> |                                | <span style="color:#c47f00;">10:3011</span><br/><span style="color:#bb3377;">10:3012</span> |                                  |
 | **VPN 01b router**                        |                                | <span style="color:#3a8f3a;">10:3013</span> |                                  | <span style="color:#c47f00;">10:3011</span><br/><span style="color:#bb3377;">10:3012</span> |
 
+- Let's build the Cloud Peering configuration for **Cisco ASR**
 
 ## 4. VRF Naming and Numbering Standard
 SAP standard: VRF = CUSTOMER_0XXX
@@ -252,6 +253,24 @@ exit
 
 - 3) interface BDI3141
  This provides the per‑VRF L3 SVI/anchor used internally for EVPN–VPNv4 stitching; the /31 IP is reused because each customer has its own VRF routing table.
+
+
+### ip extcommunity-list for Primary cisco CWAN router
+```java
+ip extcommunity-list standard CL-EVPN-PRIO1
+ 141 permit rt 1:3141
+ ```
+👉 This ensures:
+- Primary CWAN PRIO1= **Local‑Pref HIGH** & **AS‑Path = shortest**
+-➡️ Always chosen first
+### ip extcommunity-list for Secondary cisco CWAN router
+```java
+ip extcommunity-list standard CL-EVPN-PRIO2
+ 141 permit rt 1:3141
+ ```
+👉 This ensures:
+- Primary CWAN PRIO2= **Local‑Pref LOW** & **AS‑Path = longer (due to prepend)**
+-➡️ Always chosen first
 
 # High‑level workflow
 
