@@ -139,7 +139,7 @@ VIP --> APP["APP‑VM"]:::core
 
 ```
 Before any config, SAP must know:
-# Required WAN Questionnaire
+# Required WAN Questionnaire in Service Request
 
 Before any configuration, SAP must know:
 
@@ -160,6 +160,14 @@ Before any configuration, SAP must know:
 - **Customer IP:** 10.21.52.18
 
 **Optional:** BGP MD5 password
+
+# In High Availability Cloud Peering always lands on two CWAN routers (Primary & Secondary) & CWAN switches (Primary & Secondary), which may be Cisco ASR or Arista WAN devices depending on the DC build. The CWAN vendor is independent of whether the DC core is Cisco legacy (HEC 1.0) or Arista HA‑CORE (HEC 2.0)
+
+## Why stitching is required (or not):
+“HEC 2.0 (Arista HA‑CORE) requires route‑target stitching on Cisco CWAN because HA‑CORE advertises EVPN Type‑5 while the WAN uses VPNv4; HEC 1.0 (Cisco DC) speaks VPNv4 end‑to‑end so stitching is not needed.” 
+
+## When to add the ip extcommunity PRIO tags (Cisco CWAN + Arista HA‑CORE):
+“When the DC side is Arista HA‑CORE and CWAN is Cisco, tag exported service routes on the Cisco CWAN with PRIO communities using ip extcommunity‑list (e.g., CL‑EVPN‑PRIO1..4) and match them in the EVPN AF outbound route‑map—so HA‑CORE (which may not map Local‑Pref) still prefers PRIO1 via shortest AS‑Path.”
 
 %% =========================
 %%  VLAN Reservation Logic
