@@ -272,6 +272,71 @@ ip extcommunity-list standard CL-EVPN-PRIO2
 - Primary CWAN PRIO2= **Local‑Pref LOW** & **AS‑Path = longer (due to prepend)**
 -➡️ Always chosen first
 
+- 👉👉 Let's Understand in deep:
+### EVPN Edge Policy — PRIO Tagging + Tiered AS-Path (HEC18 Pattern)
+At EVPN edge, outbound policy ties PRIO classification to AS-Path length so that receivers without Local-Pref mapping still prefer PRIO1 over PRIO4. Use along with Local-Pref where applicable.
+- PRIO Extcommunity Lists (Service RT Based)
+```java
+ip extcommunity-list standard CL-EVPN-PRIO1 seq 10 permit rt 18:3022
+ip extcommunity-list standard CL-EVPN-PRIO2 seq 10 permit rt 18:3022
+ip extcommunity-list standard CL-EVPN-PRIO3 seq 10 permit rt 18:3022
+ip extcommunity-list standard CL-EVPN-PRIO4 seq 10 permit rt 18:3022
+ ```
+- Explanation: All PRIO lists match the same service RT; only the policy actions differ per PRIO level.
+-Outbound Route-Map to HA-CORE (EVPN AF)
+
+```java
+route-map RM-EVPN-PEER deny 10
+ match as-path 1
+!
+route-map RM-EVPN-PEER permit 20
+ match extcommunity CL-EVPN-PRIO1
+!
+route-map RM-EVPN-PEER permit 30
+ match extcommunity CL-EVPN-PRIO2
+ set as-path prepend 65524.18
+!
+route-map RM-EVPN-PEER permit 40
+ match extcommunity CL-EVPN-PRIO3
+ set as-path prepend 65524.18 65524.18
+!
+route-map RM-EVPN-PEER permit 50
+ match extcommunity CL-EVPN-PRIO4
+ set as-path prepend 65524.18 65524.18 65524.18
+!
+route-map RM-EVPN-PEER deny 60
+ ```
+### Neighbor Hook (Cisco ASR Example)
+```java
+router bgp 65524.18
+ address-family l2vpn evpn
+  import vpnv4 unicast re-originate
+  neighbor PG-HA-ROUTER route-map RM-EVPN-PEER out
+  maximum-paths 4
+  ```
+- Explanation: "import vpnv4 unicast re-originate" allows re-originating EVPN from VPNv4 where needed on the platform; the route-map applies the PRIO-prepend logic on export.
+### PRIO → Local-Preference (Receiving PE)
+```java
+route-map FROM-EVPN permit 10
+ match extcommunity CL-EVPN-PRIO1
+ set local-preference 500
+route-map FROM-EVPN permit 20
+ match extcommunity CL-EVPN-PRIO2
+ set local-preference 400
+route-map FROM-EVPN permit 30
+ match extcommunity CL-EVPN-PRIO3
+ set local-preference 300
+route-map FROM-EVPN permit 40
+ match extcommunity CL-EVPN-PRIO4
+ set local-preference 200
+  ```
+- Explanation: If the receiving side evaluates Local-Pref, this mapping guarantees deterministic selection regardless of AS-Path differences.
+
+### Why do we use both Local Preference and AS Path Prepend?
+Think of BGP path selection like a scorecard with tie breakers. Two of the most influential “scores” are:
+- 1. Local Preference (Local Pref) — a policy knob used inside your provider AS to express “business intent.” A higher Local Pref wins before BGP even looks at path length. This is ideal for deterministic, in AS decisions like “PRIO1 is always preferred over PRIO2.” 
+- 2. AS Path length (with prepend) — a distance hint used when the receiver does not use (or can’t see) your Local Pref. By adding our own AS multiple times (prepend), you make a path look “longer,” so it’s picked only if the shorter (more preferred) path is unavailable. 
+
 # High‑level workflow
 
 ```mermaid
