@@ -11,6 +11,7 @@ The difference between MPLS and cloud peering is that both provide private or de
 # Architecture Model
 
 There 3‑Domain Model
+
 (1) Data Center Fabric (EVPN/VXLAN)
 -Hosts the workloads (HEC/S4/HANA)
 -Uses Anycast Gateway (10.x.x.1)
