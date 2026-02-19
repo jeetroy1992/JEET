@@ -16,6 +16,4 @@ sequenceDiagram
     CWAN->>CUST: Advertise SAP subnet
     CUST->>CWAN: Advertise customer prefixes
 
-    Note over CWAN,SAP: CWAN acts as SAP-side router\nPrimary path preferred (higher local-pref)
-
 ```
