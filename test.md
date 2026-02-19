@@ -1,10 +1,21 @@
 ```mermaid
-%% Mermaid table-like grid
-flowchart TB
-    classDef header fill:#e0e0e0,stroke:#000,font-weight:bold;
+sequenceDiagram
+    participant SAP as SAP (Port Owner)
+    participant CWAN as cWAN Router (SAP Side)
+    participant EQ as Equinix Fabric
+    participant CUST as Customer
 
-    SL1["1"]:::header --> D1["DC (EVPN)"] --> R1["Compute + Tenant Isolation + Anycast GW"]
-    SL2["2"]:::header --> D2["cwan-01b"] --> R2["All Routing Logic + VRF Policies"]
-    SL3["3"]:::header --> D3["MPLS Core (SOB)"] --> R3["High‑speed Label Transport Only"]
+    SAP->>EQ: Create Z-side service token (Primary)
+    SAP->>EQ: Create Z-side service token (Secondary)
+    SAP->>CUST: Share tokens
+
+    CUST->>EQ: Redeem tokens
+    EQ->>CUST: Build L2 virtual circuits
+
+    CUST->>CWAN: Establish eBGP session (Primary/Secondary)
+    CWAN->>CUST: Advertise SAP subnet
+    CUST->>CWAN: Advertise customer prefixes
+
+    Note over CWAN,SAP: CWAN acts as SAP-side router\nPrimary path preferred (higher local-pref)
 
 ```
