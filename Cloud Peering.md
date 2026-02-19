@@ -1,5 +1,5 @@
 ## Summary
-This document provides the complete reference architecture and a concrete runbook for SAP service connectivity
+This document provides the complete reference architecture and a concrete runbook for SAP(IaaS) Cloud Peering service connectivity
 
 # Cloud Peering
 The cloud pairing is a simple plug & play service which is equivalent to the the direct connect from AWS or maybe express route from Azure or maybe the Google Cloud interconnect from GCP. Example: interconnection ecosystem providers like Equinix and MegaPort.
@@ -8,7 +8,37 @@ SAP has cloud peering connection which doesn’t require any physical link of th
 
 The difference between MPLS and cloud peering is that both provide private or dedicated connectivity solutions for customers. However, the key difference is that with MPLS, the customer can bring their own device and connect the circuit end‑to‑end directly with the service provider, while cloud peering does not involve customer‑managed end‑to‑end circuits in the same way.
 
+** Architecture Model**
+There 3‑Domain Model
+(1) Data Center Fabric (EVPN/VXLAN)
+-Hosts the workloads (HEC/S4/HANA)
+-Uses Anycast Gateway (10.x.x.1)
+-EVPN Type‑5 advertises SAP subnet prefixes
+-Ensures fast east‑west movement inside DC
 
+(2) WAN/VPN Edge (CWAN)
+Termination of customer Cloud Peering connections
+VRF CUSTOMER_0XXX lives here
+Converts EVPN Type‑5 → VPNv4
+Attaches PRIO communities
+Adds Local‑Pref or AS‑Path prepend
+
+(3) SAP ONE Backbone (MPLS Transport)
+Pure transport layer (PE → P → PE)
+No routing policy
+No VRF decisions in the P nodes
+Moves customer VRF traffic using labels
+Extremely scalable and predictable
+
+%% Mermaid table-like grid
+flowchart TB
+    classDef header fill:#e0e0e0,stroke:#000,font-weight:bold;
+
+    SL1["1"]:::header --> D1["DC (EVPN)"] --> R1["Compute + Tenant Isolation + Anycast GW"]
+    SL2["2"]:::header --> D2["cwan-01b"] --> R2["All Routing Logic + VRF Policies"]
+    SL3["3"]:::header --> D3["MPLS Core (SOB)"] --> R3["High‑speed Label Transport Only"]
+
+** Architecture Overview**
 ```mermaid
 
 flowchart LR
