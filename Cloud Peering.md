@@ -210,7 +210,7 @@ should be added for a specific customer. In this example:
 SAP standard: VRF = CUSTOMER_0XXX
 Example:Customer Numeber = 201, VRF = CUSTOMER_0201, Vlan=2201
 ________________________________________
-### VRF Configuration
+### VRF Configuration for Both CWAN router
 ```java
 vrf definition CUSTOMER_0141
  description HEC01-CUSTOMER-QUP-0141
@@ -226,7 +226,7 @@ exit
 - Each customer isolated
 - Those four RT lines are needed to keep the tenant’s normal RT policy (import/export) and to enable EVPN⇄VPNv4 “stitching” on the CWAN edge, which is mandatory whenever the DC side is Arista HA‑CORE (EVPN Type‑5) and the WAN side is VPNv4.
 
-### BDI,NVE Configuration
+### BDI,NVE Configuration for Both CWAN router
 ```java
 bridge-domain 3141
 member vni 3011410
