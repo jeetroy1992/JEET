@@ -139,7 +139,7 @@ VIP --> APP["APP‑VM"]:::core
 
 ```
 Before any config, SAP must know:
-# Required WAN Questionnaire in Service Request
+# 1. Required WAN Questionnaire in Service Request
 
 Before any configuration, SAP must know:
 
@@ -161,7 +161,25 @@ Before any configuration, SAP must know:
 
 **Optional:** BGP MD5 password
 
-## In High Availability Cloud Peering always lands on two CWAN routers (Primary & Secondary) & CWAN switches (Primary & Secondary), which may be Cisco ASR or Arista WAN devices depending on the DC build. The CWAN vendor is independent of whether the DC core is Cisco legacy (HEC 1.0) or Arista HA‑CORE (HEC 2.0)
+##  2. VLAN Reservation Logic
+
+Each DC has fixed VLAN blocks.
+Example:
+Primary VLAN pool:   400–499
+Secondary VLAN pool: 500–599
+
+**Engineer checks free VLANs:**
+
+Example allocation:
+Primary VLAN:   401
+Secondary VLAN: 501
+
+Meaning:
+401 → Primary BGP link
+501 → Secondary BGP link
+________________________________________
+
+##  3. In High Availability Cloud Peering always lands on two CWAN routers (Primary & Secondary) & CWAN switches (Primary & Secondary), which may be Cisco ASR or Arista WAN devices depending on the DC build. The CWAN vendor is independent of whether the DC core is Cisco legacy (HEC 1.0) or Arista HA‑CORE (HEC 2.0)
 
 ## Why stitching is required (or not):
 “HEC 2.0 (Arista HA‑CORE) requires route‑target stitching on Cisco CWAN because HA‑CORE advertises EVPN Type‑5 while the WAN uses VPNv4; HEC 1.0 (Cisco DC) speaks VPNv4 end‑to‑end so stitching is not needed.” 
@@ -188,22 +206,21 @@ should be added for a specific customer. In this example:
 | **VPN 01b router**                        |                                | <span style="color:#3a8f3a;">10:3013</span> |                                  | <span style="color:#c47f00;">10:3011</span><br/><span style="color:#bb3377;">10:3012</span> |
 
 
-- **VLAN Reservation Logic**
-
-Each DC has fixed VLAN blocks.
-Example:
-Primary VLAN pool:   400–499
-Secondary VLAN pool: 500–599
-Engineer checks free VLANs.
-Example allocation:
-Primary VLAN:   401
-Secondary VLAN: 501
-
-Meaning:
-401 → Primary BGP link
-501 → Secondary BGP link
+## 4. VRF Naming and Numbering Standard
+SAP standard: VRF = CUSTOMER_0XXX
+Example:Customer Numeber = 201, VRF = CUSTOMER_0201, Vlan=2201
 ________________________________________
+### VRF Configuration
+```java
+vrf definition CUSTOMER_0201
+rd 1:3201
+route-target export 1:3201
+route-target import 1:2201
+```
 
+This ensures:
+•	Each customer isolated
+•	Those four RT lines are needed to keep the tenant’s normal RT policy (import/export) and to enable EVPN⇄VPNv4 “stitching” on the CWAN edge, which is mandatory whenever the DC side is Arista HA‑CORE (EVPN Type‑5) and the WAN side is VPNv4.
 
 # High‑level workflow
 
