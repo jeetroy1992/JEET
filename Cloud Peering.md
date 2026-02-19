@@ -8,7 +8,7 @@ SAP has cloud peering connection which doesn’t require any physical link of th
 
 The difference between MPLS and cloud peering is that both provide private or dedicated connectivity solutions for customers. However, the key difference is that with MPLS, the customer can bring their own device and connect the circuit end‑to‑end directly with the service provider, while cloud peering does not involve customer‑managed end‑to‑end circuits in the same way.
 
-Goal:
+👉Goal:
 On-prem network  ⇄  SAP HEC application subnet
 
 # Architecture Model
@@ -168,7 +168,7 @@ Example:
 Primary VLAN pool:   400–499
 Secondary VLAN pool: 500–599
 
-**Engineer checks free VLANs:**
+**👉Engineer checks free VLANs:**
 
 Example allocation:
 Primary VLAN:   401
@@ -222,7 +222,7 @@ vrf definition CUSTOMER_0141
   route-target import 1:2141 stitching
 exit
 ```
-This ensures:
+👉 This ensures:
 - Each customer isolated
 - Those four RT lines are needed to keep the tenant’s normal RT policy (import/export) and to enable EVPN⇄VPNv4 “stitching” on the CWAN edge, which is mandatory whenever the DC side is Arista HA‑CORE (EVPN Type‑5) and the WAN side is VPNv4.
 
@@ -243,13 +243,12 @@ no mop sysid
 no shutdown
 exit
 ```
-This ensures:
+👉 This ensures:
 - 1) bridge-domain 3141 + member vni 3011410
  his binds the customer’s VRF to its L3 VNI (3011410) so EVPN Type‑5 routes for CUSTOMER_0141 can exist inside the DC fabric.
 
 - 2) interface nve1 → member vni 3011410 vrf CUSTOMER_0141
- This advertises the L3 VNI (3011410) in EVPN for VRF CUSTOMER_0141 so HA‑CORE learns the VRF’s IP prefixes.
-- 👉 This is what makes the VRF visible inside the Arista HA‑CORE EVPN control‑plane.
+ This advertises the L3 VNI (3011410) in EVPN for VRF CUSTOMER_0141 so HA‑CORE learns the VRF’s IP prefixes.👉 This is what makes the VRF visible inside the Arista HA‑CORE EVPN control‑plane.
 
 - 3) interface BDI3141
  This provides the per‑VRF L3 SVI/anchor used internally for EVPN–VPNv4 stitching; the /31 IP is reused because each customer has its own VRF routing table.
