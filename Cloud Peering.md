@@ -226,6 +226,34 @@ This ensures:
 - Each customer isolated
 - Those four RT lines are needed to keep the tenant’s normal RT policy (import/export) and to enable EVPN⇄VPNv4 “stitching” on the CWAN edge, which is mandatory whenever the DC side is Arista HA‑CORE (EVPN Type‑5) and the WAN side is VPNv4.
 
+### BDI,NVE Configuration
+```java
+bridge-domain 3141
+member vni 3011410
+!
+interface nve1
+member vni 3011410 vrf CUSTOMER_0141
+exit
+!
+interface BDI3141
+vrf forwarding CUSTOMER_0141
+ip address 198.19.248.254 255.255.255.254
+no mop enabled
+no mop sysid
+no shutdown
+exit
+```
+This ensures:
+- 1) bridge-domain 3141 + member vni 3011410
+ his binds the customer’s VRF to its L3 VNI (3011410) so EVPN Type‑5 routes for CUSTOMER_0141 can exist inside the DC fabric.
+
+- 2) interface nve1 → member vni 3011410 vrf CUSTOMER_0141
+ This advertises the L3 VNI (3011410) in EVPN for VRF CUSTOMER_0141 so HA‑CORE learns the VRF’s IP prefixes.
+- 👉 This is what makes the VRF visible inside the Arista HA‑CORE EVPN control‑plane.
+
+- 3) interface BDI3141
+ This provides the per‑VRF L3 SVI/anchor used internally for EVPN–VPNv4 stitching; the /31 IP is reused because each customer has its own VRF routing table.
+
 # High‑level workflow
 
 ```mermaid
