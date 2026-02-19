@@ -212,15 +212,19 @@ Example:Customer Numeber = 201, VRF = CUSTOMER_0201, Vlan=2201
 ________________________________________
 ### VRF Configuration
 ```java
-vrf definition CUSTOMER_0201
-rd 1:3201
-route-target export 1:3201
-route-target import 1:2201
+vrf definition CUSTOMER_0141
+ description HEC01-CUSTOMER-QUP-0141
+ rd 1:3141
+ address-family ipv4
+  route-target export 1:3141
+  route-target import 1:2141
+  route-target export 1:3141 stitching
+  route-target import 1:2141 stitching
+exit
 ```
-
 This ensures:
-•	Each customer isolated
-•	Those four RT lines are needed to keep the tenant’s normal RT policy (import/export) and to enable EVPN⇄VPNv4 “stitching” on the CWAN edge, which is mandatory whenever the DC side is Arista HA‑CORE (EVPN Type‑5) and the WAN side is VPNv4.
+- Each customer isolated
+- Those four RT lines are needed to keep the tenant’s normal RT policy (import/export) and to enable EVPN⇄VPNv4 “stitching” on the CWAN edge, which is mandatory whenever the DC side is Arista HA‑CORE (EVPN Type‑5) and the WAN side is VPNv4.
 
 # High‑level workflow
 
