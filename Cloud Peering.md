@@ -273,7 +273,7 @@ ip extcommunity-list standard CL-EVPN-PRIO2
 -➡️ Always chosen first
 
 - 👉👉 Let's Understand in deep:
-### EVPN Edge Policy — PRIO Tagging + Tiered AS-Path (HEC18 Pattern)
+### EVPN Edge Policy — PRIO Tagging + Tiered AS-Path
 At EVPN edge, outbound policy ties PRIO classification to AS-Path length so that receivers without Local-Pref mapping still prefer PRIO1 over PRIO4. Use along with Local-Pref where applicable.
 - PRIO Extcommunity Lists (Service RT Based)
 ```java
