@@ -187,6 +187,9 @@ ________________________________________
 ## When to add the ip extcommunity PRIO tags (Cisco CWAN + Arista HA‑CORE):
 “When the DC side is Arista HA‑CORE and CWAN is Cisco, tag exported service routes on the Cisco CWAN with PRIO communities using ip extcommunity‑list (e.g., CL‑EVPN‑PRIO1..4) and match them in the EVPN AF outbound route‑map—so HA‑CORE (which may not map Local‑Pref) still prefers PRIO1 via shortest AS‑Path.”
 
+## L2 topology between CWAN switches and CWAN routers
+Each router connects with port‑channels (LACP) to the switch pair, and the switch pair presents a trunk carrying Ex: VLAN 401 and 501 (among other allowed VLAN ranges per site policy). This provides link, device, and path diversity. Result: even if one switch or one link goes down, the VLAN(s) remain up via the other switch/link. This is why the routers are cabled to both switches.
+
 ## Examples for RT to ext-community mapping
 
 The following table shows an example of which extended community list route‑target
@@ -227,7 +230,7 @@ exit
 - Each customer isolated
 - Those four RT lines are needed to keep the tenant’s normal RT policy (import/export) and to enable EVPN⇄VPNv4 “stitching” on the CWAN edge, which is mandatory whenever the DC side is Arista HA‑CORE (EVPN Type‑5) and the WAN side is VPNv4.
 
-### BDI,NVE Configuration for Both CWAN router
+### 5. BDI,NVE Configuration for Both CWAN router
 ```java
 bridge-domain 3141
 member vni 3011410
@@ -255,7 +258,7 @@ exit
  This provides the per‑VRF L3 SVI/anchor used internally for EVPN–VPNv4 stitching; the /31 IP is reused because each customer has its own VRF routing table.
 
 
-### ip extcommunity-list for Primary cisco CWAN router
+### 6a. ip extcommunity-list for Primary cisco CWAN router
 ```java
 ip extcommunity-list standard CL-EVPN-PRIO1
  141 permit rt 1:3141
@@ -263,7 +266,7 @@ ip extcommunity-list standard CL-EVPN-PRIO1
 👉 This ensures:
 - Primary CWAN PRIO1= **Local‑Pref HIGH** & **AS‑Path = shortest**
 -➡️ Always chosen first
-### ip extcommunity-list for Secondary cisco CWAN router
+### 6b. ip extcommunity-list for Secondary cisco CWAN router
 ```java
 ip extcommunity-list standard CL-EVPN-PRIO2
  141 permit rt 1:3141
@@ -335,8 +338,27 @@ route-map FROM-EVPN permit 40
 ### Why do we use both Local Preference and AS Path Prepend?
 Think of BGP path selection like a scorecard with tie breakers. Two of the most influential “scores” are:
 - 1. Local Preference (Local Pref) — a policy knob used inside your provider AS to express “business intent.” A higher Local Pref wins before BGP even looks at path length. This is ideal for deterministic, in AS decisions like “PRIO1 is always preferred over PRIO2.” 
-- 2. AS Path length (with prepend) — a distance hint used when the receiver does not use (or can’t see) your Local Pref. By adding our own AS multiple times (prepend), you make a path look “longer,” so it’s picked only if the shorter (more preferred) path is unavailable. 
+- 2. AS Path length (with prepend) — a distance hint used when the receiver does not use (or can’t see) your Local Pref. By adding our own AS multiple times (prepend), you make a path look “longer,” so it’s picked only if the shorter (more preferred) path is unavailable.
 
+### 7. Edge Interface Configuration (ASR)
+- Primary link with **SAP IP:**:
+```java
+interface Port-channel20.401
+encapsulation dot1Q 401
+vrf forwarding CUSTOMER_0201
+ip address 10.21.52.13 255.255.255.252
+   ```
+This is the Primary L3 handoff for the customer — mapped to the Primary VLAN (401) and BGP primary peer.Converts each L2 VLAN into a routed L3 sub‑interface inside VRF CUSTOMER_0201.
+
+- Secondary link **SAP IP:**:
+```java
+interface Port-channel20.501
+encapsulation dot1Q 501
+vrf forwarding CUSTOMER_0201
+ip address 10.21.52.17 255.255.255.252
+   ```
+- Note: one primary (/30 ending .13), one secondary (/30 ending .17). **Each sub‑interface** forms an **independent eBGP peering** with the **customer/ISP side** for the cloud peering virtual circuit(s).
+  
 # High‑level workflow
 
 ```mermaid
