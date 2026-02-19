@@ -141,7 +141,7 @@ VIP --> APP["APP‑VM"]:::core
 ```mermaid
 sequenceDiagram
     participant SAP as SAP (Port Owner)
-    participant CWAN as cWAN Router (SAP Side)
+    participant CWAN as CWAN Router-Swicthes (SAP Side)
     participant EQ as Equinix Fabric
     participant CUST as Customer
 
