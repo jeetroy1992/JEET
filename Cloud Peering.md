@@ -432,6 +432,18 @@ router bgp 65200
  ```
 - Explanation: This BGP stanza brings up the PRIMARY & SECONDARY peering for VRF CUSTOMER_0141 with secure MD5, strict in/out prefix controls (prevent loops & scope adverts), route‑safety limits, EVPN awareness, and multipath—ensuring a clean, deterministic and protected Cloud Peering session.
 
+### 10. VLAN configuration for Primary & Secondary CWAN switches
+
+```java
+conf t 
+vlan 401
+name SOB-HEC01-CUST0141-QUP-ECX-PRI
+exit 
+vlan 501
+name SOB-HEC01-CUST0141-QUP-ECX-SEC
+end
+wr
+ ```
 
 # High‑level workflow
 
