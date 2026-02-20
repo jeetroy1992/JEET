@@ -341,14 +341,14 @@ Think of BGP path selection like a scorecard with tie breakers. Two of the most 
 - 2. AS Path length (with prepend) — a distance hint used when the receiver does not use (or can’t see) your Local Pref. By adding our own AS multiple times (prepend), you make a path look “longer,” so it’s picked only if the shorter (more preferred) path is unavailable.
 
 ### 7. Edge Interface Configuration (ASR)
-- Primary link with **SAP IP:**:
+- Primary link with **SAP IP:**: for Primary cisco CWAN router
 ```java
 interface Port-channel20.401
 encapsulation dot1Q 401
 vrf forwarding CUSTOMER_0201
-ip address 10.21.52.13 255.255.255.252
+ip address 10.21.52.13 255.255.255.252 
    ```
-- Secondary link **SAP IP:**:
+- Secondary link **SAP IP:**: for Secondary cisco CWAN router
 ```java
 interface Port-channel20.501
 encapsulation dot1Q 501
