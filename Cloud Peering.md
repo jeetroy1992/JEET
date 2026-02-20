@@ -353,20 +353,65 @@ Think of BGP path selection like a scorecard with tie breakers. Two of the most 
 ```java
 interface Port-channel20.401
 encapsulation dot1Q 401
-vrf forwarding CUSTOMER_0201
+vrf forwarding CUSTOMER_0141
 ip address 10.21.52.13 255.255.255.252 
    ```
 - Secondary link **SAP IP:**: for Secondary cisco CWAN router
 ```java
 interface Port-channel20.501
 encapsulation dot1Q 501
-vrf forwarding CUSTOMER_0201
+vrf forwarding CUSTOMER_0141
 ip address 10.21.52.17 255.255.255.252
    ```
 - This are the **Primary & Secondary L3 handoff for the customer** — mapped to the Primary VLAN (401) and BGP primary peer.**Converts each L2 VLAN into a routed L3 sub‑interface inside VRF CUSTOMER_0201**.
 
 - Note: one primary (/30 ending .13), one secondary (/30 ending .17). **Each sub‑interface** forms an **independent eBGP peering** with the **customer/ISP side** for the cloud peering virtual circuit(s).
+
+### 7. INBOUND & OUTBOUND FILTER Configuration (ASR)
+```java
+ip prefix-list CUST0141_MEG_QUP_FILTER_IN seq 10 deny 10.8.0.0/24
+ip prefix-list CUST0141_MEG_QUP_FILTER_IN seq 20 permit 0.0.0.0/0 le 32
+   ```
+- Explanation: Stops the customer from advertising SAP’s own 10.8.0.0/24 back to SAP (prevents routing loop or hijack).
+Everything else from customer is allowed.
+
+```java
+ip prefix-list CUST0141_MEG_QUP_FILTER_OUT seq 10 permit 10.8.0.0/24
+   ```
+- Explanation: Only advertise SAP’s production subnet 10.8.0.0/24 to the customer — nothing else leaves SAP.
+- 
+### 8. Route‑maps bind the filters to BGP (ASR)
   
+```java
+route-map CUST0141_MEG_QUP_FILTER_IN permit 10
+ match ip address prefix-list CUST0141_MEG_QUP_FILTER_IN
+!
+route-map CUST0141_MEG_QUP_FILTER_OUT permit 10
+ match ip address prefix-list CUST0141_MEG_QUP_FILTER_OUT
+   ```
+### 9. BGP configuration (ASR)
+```java
+router bgp 65200
+ address-family ipv4 vrf CUSTOMER_0141
+  neighbor 10.21.52.14 remote-as 65010
+  neighbor 10.21.52.14 description MEG_PRI for QUP
+  neighbor 10.21.52.14 password !bgp;quipSAP
+  neighbor 10.21.52.14 activate
+  neighbor 10.21.52.14 route-map CUST0141_ECX_QUP_FILTER_IN in
+  neighbor 10.21.52.14 route-map CUST0141_ECX_QUP_FILTER_OUT out
+  neighbor 10.21.52.14 maximum-prefix 5000 80 restart 1
+  advertise l2vpn evpn
+  import path selection all
+  redistribute static
+  maximum-paths 4
+  default-information originate
+ exit-address-family
+exit
+do wr
+ ```
+- Explanation: This BGP stanza brings up the PRIMARY peering for VRF CUSTOMER_0141 with secure MD5, strict in/out prefix controls (prevent loops & scope adverts), route‑safety limits, EVPN awareness, and multipath—ensuring a clean, deterministic and protected Cloud Peering session.
+
+
 # High‑level workflow
 
 ```mermaid
