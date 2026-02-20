@@ -389,7 +389,8 @@ route-map CUST0141_MEG_QUP_FILTER_IN permit 10
 route-map CUST0141_MEG_QUP_FILTER_OUT permit 10
  match ip address prefix-list CUST0141_MEG_QUP_FILTER_OUT
    ```
-### 9. BGP configuration (ASR)
+### 9. BGP configuration for Primary & Secondary (ASR)
+- Primary:
 ```java
 router bgp 65200
  address-family ipv4 vrf CUSTOMER_0141
@@ -408,6 +409,26 @@ router bgp 65200
  exit-address-family
 exit
 do wr
+ ```
+- Secondary:
+```java
+router bgp 65200
+ address-family ipv4 vrf CUSTOMER_0141
+  neighbor 10.21.52.18 remote-as 65200
+  neighbor 10.21.52.18 description MEG_SEC for QUP
+  neighbor 10.21.52.18 password !bgp;quipSAP
+  neighbor 10.21.52.18 activate
+  neighbor 10.21.52.18 route-map CUST0141_MEG_QUP_FILTER_IN in
+  neighbor 10.21.52.18 route-map CUST0141_MEG_QUP_FILTER_OUT out
+  neighbor 10.21.52.18 maximum-prefix 5000 80 restart 1
+  advertise l2vpn evpn
+  import path selection all
+  redistribute static
+  maximum-paths 4
+  default-information originate
+ exit-address-family
+ exit
+ do wr
  ```
 - Explanation: This BGP stanza brings up the PRIMARY peering for VRF CUSTOMER_0141 with secure MD5, strict in/out prefix controls (prevent loops & scope adverts), route‑safety limits, EVPN awareness, and multipath—ensuring a clean, deterministic and protected Cloud Peering session.
 
