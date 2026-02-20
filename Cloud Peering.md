@@ -317,7 +317,15 @@ router bgp 65524.18
   neighbor PG-HA-ROUTER route-map RM-EVPN-PEER out
   maximum-paths 4
   ```
-- Explanation: "import vpnv4 unicast re-originate" allows re-originating EVPN from VPNv4 where needed on the platform; the route-map applies the PRIO-prepend logic on export.
+- Explanation: "import vpnv4 unicast re-originate" allows Take routes from my VPNv4 (L3VPN) table, rebuild them as EVPN routes, and put them inside EVPN.You are taking routes IN from vpnv4 → EVPN.Why "re-originate"? Because EVPN peers cannot understand VPNv4 routes directly.So the router:
+- Takes a VPNv4 route & Cleans it
+- Converts it into a fresh EVPN Type-5 IP Prefix route & Inserts it into the EVPN address-family
+
+(IMPORT)
+ [VPNv4 Routes] ---------> [EVPN Table] ---------> (EXPORT) ---------> [PG-HA-ROUTER]
+                                   |
+                                   |---> Allow maximum-paths 4 for ECMP inside EVPN
+  
 ### PRIO → Local-Preference (Receiving PE)
 ```java
 route-map FROM-EVPN permit 10
