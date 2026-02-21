@@ -10,7 +10,10 @@ Engineer Name:
 Status (Resolved / Workaround):
 
 Customer Issue:
-Type of Connection(MPLS/Cloud Peering:
+Type of Connection (MPLS / Cloud Peering via Equinix / Megaport):
+Cloud Provider (AWS / Azure / GCP / OCI) - if applicable:
+Megaport/Equinix Port ID or Circuit ID(optional):
+VLAN/Virtual Circuit ID (if applicable):
 
 Circuit status before the call:
 Circuit status after the call:
