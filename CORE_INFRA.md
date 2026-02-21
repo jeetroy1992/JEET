@@ -1,5 +1,5 @@
 ```java
-# What is “VRF INFRA”? (Very simple meaning)
+✅ What is “VRF INFRA”? (Very simple meaning)
 Think of VRF INFRA as a separate network world inside the switch.
 
 Only Infra / Admin / Management VLANs live inside this VRF
@@ -10,7 +10,7 @@ It has its own default route, its own BGP, own static routes, own interfaces
 So:
 👉 INFRA VRF = management world for servers, storage, backups, OOB, monitoring, DNS, etc.
 
-2. What networks are inside VRF INFRA?
+✅ What networks are inside VRF INFRA?
 From your routing table:
 These VLANs belong to the management world
 
@@ -30,7 +30,7 @@ Vlan914 → Connection to Cisco/Firewall (core link)
 
 These all represent different management networks for servers, storage, HANA, backup, etc.
 
-3. Default Route in VRF INFRA (Very Important)
+✅ Default Route in VRF INFRA (Very Important)
 You have this route:
 0.0.0.0/0 → via 198.19.252.60, Vlan914
 
@@ -89,7 +89,7 @@ Redundancy:
 105 = A‑side WAN router
 106 = B‑side WAN router
 
-Arista Leaf Core is doing this:
+✅ Arista Leaf Core is doing this:
 Holds all management VLANs in VRF INFRA
 Sends mgmt traffic to WAN via Vlan914 → Firewall
 Uses EVPN BGP to distribute mgmt networks across VXLAN fabric
