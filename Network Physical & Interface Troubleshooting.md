@@ -15,6 +15,43 @@ Shows: Admin/oper state, speed/duplex, media type, VLAN/trunk.
 Good: connected, expected speed/duplex (1G Full), proper VLAN/type  
 Bad: notconnect, err-disabled, sfpAbsent, unsupported module
 
+Example :
+- Interface is up: Physical link (Layer 1) is active.
+Line protocol up: Layer 2 is working (Ethernet negotiation OK).
+up/down → L1 OK, L2 issues (speed/duplex mismatch, bad cable).
+down/down → No link (cable unplugged, transceiver failure).
+administratively down → Shutdown by config.
+Hardware is Ethernet, address is 948e.d3e9.a8c4 (bia 948e.d3e9.a8c4)
+Hardware MAC address of NIC.
+bia = burned‑in address (factory-programmed).
+- Ethernet MTU 10178 bytes, Ethernet MRU 10200 bytes
+MTU 10178 = Jumbo frames enabled (default is 1500).
+MRU slightly larger to allow overhead.
+Used in: Storage networks,VXLAN, High throughput environments
+BW 1000000 kbit : Full-duplex, 1Gb/s, auto negotiation: on
+✔ Speed = 1Gbps
+✔ Duplex = full
+✔ Auto-negotiate on → both ends support autoneg.
+If autoneg fails → duplex mismatch → CRC errors.
+- Traffic Rates= 5 seconds input rate 987 Mbps (100% with framing overhead) | 5 seconds output rate 28.1 kbps
+
+✔ Input = 987 Mbps → The switch is receiving heavy incoming traffic.
+✔ Output = almost nothing → This is normal if this is a server → switch port.
+This pattern means:
+Server is sending heavy ingress data into the switch.
+Switch is not sending much back.
+
+- Traffic Counters= 37144879171 packets input, 51830108875484 bytes
+✔ Total traffic received since counters last cleared (246 days).
+❗ Error counters (critical)
+0 runts, 0 giants
+0 input errors, 0 CRC, 0 alignment, 0 symbol, 0 input discards
+
+This is excellent.
+No CRC errors → Cable/transceiver is good.
+No giants/runts → MTU consistent.
+No discards → No buffer drops.
+
 ---
 
 ## 2) Detailed Interface Health
