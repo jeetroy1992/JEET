@@ -56,6 +56,7 @@ High outbound + low inbound = switch forwarding heavily to the host
 Command:  
 show interface ethernet3 | include error|discard
 
+Use this when you only want to see physical problems and congestion indicators without scrolling.
 ---
 
 ## 5) MAC Address on the Port
@@ -65,6 +66,7 @@ show mac address-table interface ethernet3
 
 Good: 1 MAC  
 Bad: multiple MACs, flapping → loop or unauthorized bridge
+Good: 1 MAC (host). Bad: Multiple MACs (loop/bridge), or MAC flapping (instability).
 
 ---
 
