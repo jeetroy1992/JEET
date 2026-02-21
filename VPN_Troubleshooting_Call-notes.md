@@ -1,11 +1,12 @@
 ```java
-Call Summary:
+Troubleshooting Call Summary:
 
 Date:
 Service Request/Incident Number:
 DC: 
 CID:
 Shift(APJ/EMEA/AMER):
+Status(Resolved/Work around):
 
 Customer Issue: 
 Type of IPSEC VPN:
