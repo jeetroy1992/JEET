@@ -3,27 +3,28 @@ Troubleshooting Call Summary:
 
 Date:
 Service Request/Incident Number:
-DC: 
+DC:
 CID:
-Shift(APJ/EMEA/AMER):
-Status(Resolved/Work around):
+Shift (APJ/EMEA/AMER):
+Status (Resolved / Workaround):
 
-Customer Issue: 
+Customer Issue:
 Type of IPSEC VPN:
 Customer Peer IP:
 SAP Peer IP:
-Customer Device :
+SAP Device: Cisco ASR 1002 HX
+Customer Device:
 
-Tunnel status before the call: 
-Tunnel status after the call : 
+Tunnel status before the call:
+Tunnel status after the call:
+
 What modification done from Network side:
-What modification done at customer side(optional):
+What modification done at customer side (optional):
 Any config rollback done (yes/no):
+
 Next Action Plan:
-Ticket Clousure(yes/no):
-ustomer confirmation received (yes/no):
-Tunnel status before the call: 
-Tunnel status after the call : 
+Ticket Closure (yes/no):
+Customer confirmation received (yes/no):
 
 Before call Phase-1 parameters at SAP end:
 Before call Phase-2 parameters at SAP end:
