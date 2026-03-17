@@ -23,7 +23,7 @@ Below is the example of CID: PMS
 | F5 VIP              | 10.67.247.249   | CID-PMS Floating internet LB IP                          |
 | F5 SELF IP          | 10.67.247.250   | CID-PMS Self f5 LB IP                          |
 | F5 SELF IP          | 10.67.247.251   | CID-PMS Self f5 LB IP                          |
-| DNS HOST/ SNAT      | 157.133.120.173 | CID-PMS HEC01-NW-INTERNET
+| DNS HOST      | 157.133.120.173 | CID-PMS HEC01-NW-INTERNET : dedicated SNAT 
 | CGS INFRA iface     | 198.18.27.146   | CID-PMS CGS eth0 — bridge into VRF INFRA                 |                               |
 | HA-Core VLAN60      | 198.18.24.1     |  INFRA VRF gateway + SNAT point  |
 | HA-Core VLAN914     | 198.19.252.34   | Dedicated Checkpoint FW uplink  |
@@ -90,12 +90,33 @@ replaces source IP 10.67.247.11 with the dedicated PMS public IP 157.133.120.173
 Internet response arrives at PMS_PUBLIC IP-157.133.120.173. F5 reverses the NAT (looks up connection table, translates destination
 back to 10.67.247.11) and delivers to the VM. VM receives response normally.
 
+> ssh hec01v064830.rot
+Destination Gateway Genmask Iface Notes
+0.0.0.0 10.67.247.1 0.0.0.0 eth2 ¬ default — internet hits this
+10.67.247.0 0.0.0.0 255.255.255.0 eth2 ¬ connected route
+100.127.0.0 10.67.247.254 255.255.0.0 eth2 ¬ infra ® CGS 
+147.204.0.0 10.67.247.254 255.255.0.0 eth2 ¬ infra ® CGS
+169.145.0.0 10.67.247.254 255.255.0.0 eth2 ¬ infra ® CGS
+
+Troubleshooting:
+• VM: ping 10.67.247.1 — HA-Core gateway reachable?
+• VM: traceroute 8.8.8.8 — first hop .1 (HA-Core)? Second hop .249 (F5)?
+• F5: Is VIP .249 up? Is SNAT pool configured for this customer VRF?
+• F5 access logs: Is SNAT translation actually occurring?
+
+## Flow 2 — Customer VM to Infra Networks
 
 
-
-
-
-
+Destination Gateway Genmask Iface Purpose
+100.127.0.0 198.18.24.1 255.255.0.0 eth0 Infra ® HA-Core INFRA VRF
+147.204.0.0 198.18.24.1 255.255.0.0 eth0 Infra ® HA-Core INFRA VRF
+169.145.0.0 198.18.24.1 255.255.0.0 eth0 Infra ® HA-Core INFRA VRF
+198.18.24.0 0.0.0.0 255.255.248.0 eth0 Connected (INFRA range)
+10.67.247.0 0.0.0.0 255.255.255.0 eth2 Connected (Customer VLAN)
+10.0.0.0 10.67.247.1 255.0.0.0 eth2 RFC On-Prem ® HA-Core
+172.16.0.0 10.67.247.1 255.240.0.0 eth2 RFC On-Prem ® HA-Core
+192.168.0.0 10.67.247.1 255.255.0.0 eth2 RFC On-Prem ® HA-Core
+0.0.0.0 10.67.247.249 0.0.0.0 eth2 Default ® F5 VIP (Internet)
 
 # 📘 Service & Application Ports Reference
 
