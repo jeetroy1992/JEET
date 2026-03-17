@@ -31,23 +31,28 @@ Below is the example of CID: PMS
 ### Component 1 — Customer VM
 The actual SAP workload server. Has TWO network interfaces with completely different purposes:
 • eth2 (Customer VLAN 10.67.247.0/24): All routable traffic — internet, on-prem, infra. Default gateway is HA-Core
-VIP .1. This is where all application traffic flows.
+VGW X.X.X.1 .This is where all application traffic flows.
 
-• eth1 (Storage VLAN 100.64.122.0/24): Block storage access only. NO default gateway — packets cannot be routed
-off this interface. The storage array is directly on the same L2 segment. This prevents storage traffic from ever
-leaking to the internet or other networks.
+• eth1 (Storage VLAN 100.64.122.0/24): — packets cannot be routed
 
 ### Component 2 — HA-Core (High Availability Core Router/Switch)
 The HA-Core is the L3 backbone and the SINGLE routing policy enforcement point in SAP HEC. It is an Arista switch
-cluster — four nodes (01a .2, 01b .3, 01c .4, 01d .5) connected to 4 Spine switches. all sharing VIP .1 via VARP. Every
-routing decision goes through HA-Core. It runs separate VRF instances per customer (VRF CUSTOMER_0004 for
-PMS) plus the shared INFRA VRF for SAP management traffic. No routing decision is made anywhere else in the
-customer path.
+cluster — four nodes (01a X.X.X.2, 01b X.X.X.3, 01c X.X.X.4, 01d X.X.X.5) connected to 4 Arista Spine(11,12,13,14) switches. all sharing VIP .1 via VARP. 
+Every routing decision goes through HA-Core. It runs separate VRF instances per customer (VRF CUSTOMER_0004 for
+PMS) plus the shared INFRA VRF for SAP management traffic. 
+
+👉 Think of HA‑Core as: A 4‑lane traffic control center. Always available, always routing
+
 ### Component 3 — CGS (Customer Gateway Server)
-The CGS is a virtual Linux server that is uniquely multi-homed across THREE network domains: eth2 in Customer
-VLAN, eth0 in INFRA VRF, eth1 in Storage VLAN. This makes CGS the 'bridge' between isolated network domains.
+The CGS is a virtual Intel Xeon Linux server that is uniquely multi-homed across THREE network domains.
 CGS runs Active/Standby (CGS-A and CGS-B) with a shared VIP (.254). All routing tables — both in VMs and in
 HA-Core — always point to .254, making failover completely transparent and requiring zero reconfiguration.
+
+Customer network (eth2)
+SAP Infra network (eth0)
+Storage network (eth1)
+
+👉 Think of CGS as: A triple‑door gateway that connects all isolated networks safely
 
 ### Component 4 — F5 BIG-IP
 The F5 handles ALL internet traffic and is the SINGLE SNAT point. Each customer gets a dedicated SNAT IP pool —
