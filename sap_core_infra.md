@@ -16,9 +16,7 @@
 | F5 VIP              | 10.67.247.249   | CID-PMS Floating internet LB IP                          |
 | F5 SELF IP          | 10.67.247.250   | CID-PMS Self f5 LB IP                          |
 | F5 SELF IP          | 10.67.247.251   | CID-PMS Self f5 LB IP                          |
-| CGS INFRA iface     | 198.18.27.146   | CID-PMS CGS eth0 — bridge into VRF INFRA                 |
-
-| Component           | Key IP          | Role / Notes                                      |
+| CGS INFRA iface     | 198.18.27.146   | CID-PMS CGS eth0 — bridge into VRF INFRA                 |                               |
 | HA-Core VLAN60      | 198.18.24.1     |  INFRA VRF gateway + SNAT point  |
 | HA-Core VLAN914     | 198.19.252.34   | Dedicated Checkpoint FW uplink  |
 
