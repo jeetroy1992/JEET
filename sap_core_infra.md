@@ -65,6 +65,15 @@ Connect SAP HEC to the customer's on-premises network. Two redundant paths: VPN 
 over internet (standard, flexible), and CWAN Routers using dedicated MPLS or cloud peering circuits (guaranteed SLA,
 lower latency, higher cost). Both paths are used simultaneously for redundancy.
 
+## The Three Traffic Categories
+
+### 1. Internet == Public IPs
+### 2. Infra == 100.127/147.204/169.145
+### 3. On-Prem == RFC1918
+
+Note: Non-RFC On-Prem Exception: If customer uses non-RFC IPs at On-Prem (e.g. 140.140.x.x), these are NOT auto-recognized as On-Prem. Traffic falls
+to default route => F5
+
 # 📘 Service & Application Ports Reference
 
 ## 🔐 Standard Service Ports
