@@ -1,5 +1,12 @@
 
+# SAP HEC
+SAP HEC (HANA Enterprise Cloud) is SAP's private managed hosting platform. Unlike AWS or Azure (shared public
+cloud), SAP HEC gives each customer a completely dedicated and isolated network slice. Every customer gets their
+own VRF (Virtual Routing and Forwarding) on the HA-Core router. A VRF is a completely separate routing table inside
+one physical device — two customers on the same HA-Core are completely invisible to each other. This is the
+foundation of SAP HEC multi-tenancy.
 
+Below is the example of CID: PMS
 
 | Component           | Key IP          | Role / Notes                                      |
 |---------------------|-----------------|---------------------------------------------------|
