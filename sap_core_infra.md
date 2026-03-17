@@ -84,10 +84,10 @@ Packet arrives at HA-Core. Route lookup in VRF CUSTOMER_0004 (not the global tab
 match 8.8.8.8. Default in this VRF points to F5 VIP .249. HA-Core forwards to F5.
 ### Step 3 — F5 SNAT:
 Packet hits F5 VIP .249. Active unit (lb-hec01-01, .250) processes it. F5 looks up the SNAT pool for this customer and
-replaces source IP 10.67.247.11 with the dedicated PMS public IP. A connection table entry is created: internal
+replaces source IP 10.67.247.11 with the dedicated PMS public IP 157.133.120.173. A connection table entry is created: internal
 10.67.247.11:PORT « external PMS_PUBLIC:PORT.
 ### Step 4 — Return traffic:
-Internet response arrives at PMS_PUBLIC IP. F5 reverses the NAT (looks up connection table, translates destination
+Internet response arrives at PMS_PUBLIC IP-157.133.120.173. F5 reverses the NAT (looks up connection table, translates destination
 back to 10.67.247.11) and delivers to the VM. VM receives response normally.
 
 
