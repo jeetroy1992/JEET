@@ -27,6 +27,38 @@ Below is the example of CID: PMS
 | HA-Core VLAN60      | 198.18.24.1     |  INFRA VRF gateway + SNAT point  |
 | HA-Core VLAN914     | 198.19.252.34   | Dedicated Checkpoint FW uplink  |
 
+## The Five Key Components
+### Component 1 — Customer VM
+The actual SAP workload server. Has TWO network interfaces with completely different purposes:
+• eth2 (Customer VLAN 10.67.247.0/24): All routable traffic — internet, on-prem, infra. Default gateway is HA-Core
+VIP .1. This is where all application traffic flows.
+
+• eth1 (Storage VLAN 100.64.122.0/24): Block storage access only. NO default gateway — packets cannot be routed
+off this interface. The storage array is directly on the same L2 segment. This prevents storage traffic from ever
+leaking to the internet or other networks.
+
+### Component 2 — HA-Core (High Availability Core Router/Switch)
+The HA-Core is the L3 backbone and the SINGLE routing policy enforcement point in SAP HEC. It is an Arista switch
+cluster — four nodes (01a .2, 01b .3, 01c .4, 01d .5) connected to 4 Spine switches. all sharing VIP .1 via VARP. Every
+routing decision goes through HA-Core. It runs separate VRF instances per customer (VRF CUSTOMER_0004 for
+PMS) plus the shared INFRA VRF for SAP management traffic. No routing decision is made anywhere else in the
+customer path.
+### Component 3 — CGS (Customer Gateway Server)
+The CGS is a virtual Linux server that is uniquely multi-homed across THREE network domains: eth2 in Customer
+VLAN, eth0 in INFRA VRF, eth1 in Storage VLAN. This makes CGS the 'bridge' between isolated network domains.
+CGS runs Active/Standby (CGS-A and CGS-B) with a shared VIP (.254). All routing tables — both in VMs and in
+HA-Core — always point to .254, making failover completely transparent and requiring zero reconfiguration.
+
+### Component 4 — F5 BIG-IP
+The F5 handles ALL internet traffic and is the SINGLE SNAT point. Each customer gets a dedicated SNAT IP pool —
+PMS traffic always appears from PMS's own public IP, never shared with other customers. F5 runs Active/Standby with
+a floating VIP (.249). Failover is transparent to VMs.
+
+### Component 5 — VPN / CWAN Routers
+Connect SAP HEC to the customer's on-premises network. Two redundant paths: VPN Routers using IPSec tunnels
+over internet (standard, flexible), and CWAN Routers using dedicated MPLS or cloud peering circuits (guaranteed SLA,
+lower latency, higher cost). Both paths are used simultaneously for redundancy.
+
 # 📘 Service & Application Ports Reference
 
 ## 🔐 Standard Service Ports
