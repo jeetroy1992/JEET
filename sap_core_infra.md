@@ -74,6 +74,29 @@ lower latency, higher cost). Both paths are used simultaneously for redundancy.
 Note: Non-RFC On-Prem Exception: If customer uses non-RFC IPs at On-Prem (e.g. 140.140.x.x), these are NOT auto-recognized as On-Prem. Traffic falls
 to default route => F5
 
+## Flow 1 — Customer VM to Internet (HTTP/HTTPS)
+
+### Step 1 — VM sends packet:
+VM (10.67.247.11) sends packet dst=8.8.8.8. Kernel routing: 0.0.0.0/0 ® gateway 10.67.247.1 via eth2. Packet exits
+eth2 toward HA-Core. The VM has NO specific route for 8.8.8.8, so the default catches it.
+### Step 2 — HA-Core VRF lookup:
+Packet arrives at HA-Core. Route lookup in VRF CUSTOMER_0004 (not the global table). Infra routes (.254) don't
+match 8.8.8.8. Default in this VRF points to F5 VIP .249. HA-Core forwards to F5.
+### Step 3 — F5 SNAT:
+Packet hits F5 VIP .249. Active unit (lb-hec01-01, .250) processes it. F5 looks up the SNAT pool for this customer and
+replaces source IP 10.67.247.11 with the dedicated PMS public IP. A connection table entry is created: internal
+10.67.247.11:PORT « external PMS_PUBLIC:PORT.
+### Step 4 — Return traffic:
+Internet response arrives at PMS_PUBLIC IP. F5 reverses the NAT (looks up connection table, translates destination
+back to 10.67.247.11) and delivers to the VM. VM receives response normally.
+
+
+
+
+
+
+
+
 # 📘 Service & Application Ports Reference
 
 ## 🔐 Standard Service Ports
