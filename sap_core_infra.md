@@ -250,7 +250,22 @@ to default route => F5
 
 ## Flow 1 — Customer VM to Internet (HTTP/HTTPS)
 
-<img width="1300" height="2268" alt="image" src="https://github.com/user-attachments/assets/7989c93d-0f17-4280-a4b3-ef63872b6ab3" />
+flowchart TD
+  A([Customer VM<br/>192.168.12.11<br/>eth2])
+  B([HA-Core<br/>VRF CUSTOMER_0191<br/>VARP VIP: 192.168.12.1])
+  C([F5 BIG-IP<br/>VIP: 192.168.12.249<br/>Active: .250 / Standby: .251])
+  D([INTERNET<br/>Public Destination])
+
+  A -->|"Default route<br/>0.0.0.0/0 → 192.168.12.1"| B
+  B -->|"VRF lookup<br/>no specific match<br/>→ F5 VIP .249"| C
+  C -->|"SNAT<br/>VM IP → Public IP<br/>SNAT: 157.133.65.93"| D
+  D -->|"Return traffic<br/>reverse SNAT<br/>dst: 157.133.65.93 → 192.168.12.11"| C
+  C -->|"Deliver<br/>to VM"| A
+
+  style A fill:#1a3a5c,color:#fff
+  style B fill:#1a4a2e,color:#fff
+  style C fill:#4a2a1a,color:#fff
+  style D fill:#2a1a4a,color:#fff
 
 
 ### Step 1 — VM sends packet:
