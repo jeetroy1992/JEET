@@ -376,7 +376,25 @@ style C fill:#3a1a1a,color:#fff
 style D fill:#4a2a1a,color:#fff
 style E fill:#2a2a4a,color:#fff
 ```
-## Flow 4 Infra Server to VM (Inbound via Checkpoint FW)
+## Step-by-Step Flow
+
+1. **VM 192.168.12.11** → wants to reach **On‑Prem 192.168.1.50**
+
+2. VM has no specific route for 192.168.1.x → `0.0.0.0/0` → **HA‑Core 192.168.12.1**
+
+3. **HA‑Core VRF CUSTOMER_0191** → EVPN learned:  
+   **192.168.1.0/24 via VTEP 198.19.249.128**
+
+4. **VPN Router VTEP .128** → VXLAN encapsulation (VNI 3151910) →  
+   IPsec tunnel → On‑Prem
+
+5. **On‑Prem firewall** sees **real src IP 192.168.12.11** → matches allow rule →  
+   **delivered**
+
+6. On‑Prem reply → VPN tunnel → HA‑Core → VM  
+   `// return path uses same tunnel, real IP throughout`
+   
+## Flow 4 Infra Server to customer VM (Inbound via Checkpoint FW)
 ```mermaid
 flowchart TD
 A([􀀀 Infra Server\n147.204.x.x])
@@ -400,6 +418,25 @@ style E fill:#1a4a2e,color:#fff
 style F fill:#3a1a1a,color:#fff
 style G fill:#1a3a5c,color:#fff
 ```
+## Step-by-Step Flow
+
+1. **Infra Server 147.204.x.x** → sends packet to **CGS or VM 192.168.12.x**
+
+2. sw‑fwt switches → forward at **L2 toward Checkpoint FW**  
+   `// pure switching, no routing`
+
+3. **Checkpoint FW** → inspect policy → ALLOW? forward + log | DENY? DROP + alert
+
+4. FW forwards → **HA‑Core VLAN914 10.255.240.18**  
+   `// FW's dedicated door into HA‑Core`
+
+5. **VLAN914** is in VRF INFRA → HA‑Core routes internally →  
+   **VLAN60 100.96.88.1**  
+   `// same VRF, internal routing`
+
+6. **VLAN60** → reverse SNAT → **CGS eth0 100.96.94.10** → CGS eth2 → Customer VLAN
+
+7. **Customer VM 192.168.12.11** receives packet ✅
 ## 🔴VLAN60 vs VLAN914 Relationship
 ```mermaid
 flowchart LR
