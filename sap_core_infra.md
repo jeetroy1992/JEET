@@ -7,8 +7,8 @@ one physical device — two customers on the same HA-Core are completely invisib
 foundation of SAP HEC multi-tenancy.
 
 ➡️ Below is the example of HEC15-Customer-OGV-2191 who has IPSEC S2S VPN connection
-✔ Production network: 192.168.12.0/24
-✔ Storage network: 100.104.227.0/24
+ ✔ Production network: 192.168.12.0/24
+ ✔ Storage network: 100.104.227.0/24
 
 | Component           | Key IP          | Role / Notes                                      |
 |---------------------|-----------------|---------------------------------------------------|
