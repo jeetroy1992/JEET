@@ -603,6 +603,18 @@ flowchart TD
   style V914 fill:#1a4a2e,color:#fff
   style STR fill:#2a1a4a,color:#fff
 ```
+## Golden Rules to Remember
+
+| Rule | Detail |
+|------|--------|
+| <span style="background:#4ea1ff; padding:4px 8px; border-radius:4px; color:#fff;">VM is simple</span> | VM only knows: default → HA‑Core, infra → CGS. That's it. |
+| <span style="background:#2ecc71; padding:4px 8px; border-radius:4px; color:#fff;">HA‑Core is the brain</span> | Decides: internet? → F5. On‑Prem? → VPN. Infra? → CGS already handled it. |
+| <span style="background:#e67e22; padding:4px 8px; border-radius:4px; color:#fff;">CGS is the bridge</span> | Only device in Customer VRF + INFRA VRF + Storage. No other device crosses these domains. |
+| <span style="background:#16a085; padding:4px 8px; border-radius:4px; color:#fff;">VLAN60 = outbound infra door</span> | CGS eth0 connects here. SNAT happens here. Direction: Customer → Infra. |
+| <span style="background:#8e44ad; padding:4px 8px; border-radius:4px; color:#fff;">VLAN914 = inbound infra door</span> | Checkpoint FW connects here. Direction: Infra → Customer. Mandatory FW inspection. |
+| <span style="background:#c0392b; padding:4px 8px; border-radius:4px; color:#fff;">F5 = only internet SNAT</span> | All internet traffic NAT’d here. Per‑customer dedicated IP pool. |
+| <span style="background:#34495e; padding:4px 8px; border-radius:4px; color:#fff;">Never point to .253/.252</span> | Always use CGS VIP .254. Direct to physical CGS breaks failover. |
+
 # 📘 Service & Application Ports Reference
 
 ## 🔐 Standard Service Ports
