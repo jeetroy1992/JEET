@@ -6,7 +6,7 @@ own VRF (Virtual Routing and Forwarding) on the HA-Core router. A VRF is a compl
 one physical device — two customers on the same HA-Core are completely invisible to each other. This is the
 foundation of SAP HEC multi-tenancy.
 
-➡️ Below is the example of HEC15-Customer-OGV-2191
+➡️ Below is the example of HEC15-Customer-OGV-2191 who has IPSEC S2S VPN connection
 ✔ Production network: 192.168.12.0/24
 ✔ Storage network: 100.104.227.0/24
 
