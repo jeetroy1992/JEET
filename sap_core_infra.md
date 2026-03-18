@@ -1,5 +1,5 @@
 
-# SAP HEC
+# 📝 SAP HEC
 SAP HEC (HANA Enterprise Cloud) is SAP's private managed hosting platform. Unlike AWS or Azure (shared public
 cloud), SAP HEC gives each customer a completely dedicated and isolated network slice. Every customer gets their
 own VRF (Virtual Routing and Forwarding) on the HA-Core router. A VRF is a completely separate routing table inside
@@ -7,8 +7,8 @@ one physical device — two customers on the same HA-Core are completely invisib
 foundation of SAP HEC multi-tenancy.
 
 ➡️ Below is the example of HEC15-Customer-OGV-2191
-- Production network: 192.168.12.0/24
-- Storage network: 100.104.227.0/24
+✔ Production network: 192.168.12.0/24
+✔ Storage network: 100.104.227.0/24
 
 | Component           | Key IP          | Role / Notes                                      |
 |---------------------|-----------------|---------------------------------------------------|
@@ -88,12 +88,12 @@ c5353614@hec15v015744:~> ip addr
 hec15v015744:~> route -n
 Kernel IP routing table
 Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
-0.0.0.0         192.168.12.1    0.0.0.0         UG    0      0        0 eth2 ====>Pointing towards HA_CORE
-100.104.0.0     100.104.227.1   255.255.255.0   UG    0      0        0 eth1
+0.0.0.0         192.168.12.1    0.0.0.0         UG    0      0        0 eth2 ====👉Pointing towards VGW: Vlan2191 on HA_CORE routers
+100.104.0.0     100.104.227.1   255.255.255.0   UG    0      0        0 eth1 ====👉Pointing towards VGW: Vlan2191 on Storage routers
 100.104.227.0   0.0.0.0         255.255.255.0   U     0      0        0 eth1
-100.127.0.0     192.168.12.254  255.255.0.0     UG    0      0        0 eth2 ====>INFRA routes Pointing towards customer CGS
-147.204.0.0     192.168.12.254  255.255.0.0     UG    0      0        0 eth2 ====>INFRA routes Pointing towards customer CGS
-169.145.0.0     192.168.12.254  255.255.0.0     UG    0      0        0 eth2 ====>INFRA routes Pointing towards customer CGS
+100.127.0.0     192.168.12.254  255.255.0.0     UG    0      0        0 eth2 ====👉INFRA routes Pointing towards customer CGS
+147.204.0.0     192.168.12.254  255.255.0.0     UG    0      0        0 eth2 ====👉INFRA routes Pointing towards customer CGS
+169.145.0.0     192.168.12.254  255.255.0.0     UG    0      0        0 eth2 ====👉INFRA routes Pointing towards customer CGS
 192.168.12.0    0.0.0.0         255.255.255.0   U     0      0        0 eth2   
 
 ```
@@ -102,16 +102,16 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 c5353614@hec15v015742:~> route -n
 Kernel IP routing table
 Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
-0.0.0.0         192.168.12.249  0.0.0.0         UG    0      0        0 eth2
+0.0.0.0         192.168.12.249  0.0.0.0         UG    0      0        0 eth2 ====👉Pointing towards LoadBalancer VIP: route-domain CUST0191
 10.0.0.0        192.168.12.1    255.0.0.0       UG    0      0        0 eth2
 100.96.64.0     0.0.0.0         255.255.224.0   U     0      0        0 eth0
 100.96.88.0     0.0.0.0         255.255.248.0   U     0      0        0 eth0
 100.104.0.0     100.104.227.1   255.255.255.0   UG    0      0        0 eth1
 100.104.227.0   0.0.0.0         255.255.255.0   U     0      0        0 eth1
 100.124.64.0    0.0.0.0         255.255.224.0   U     0      0        0 eth0
-100.127.0.0     100.96.88.1     255.255.0.0     UG    0      0        0 eth0 === Pointing APP_MGMT : Vlan60
-147.204.0.0     100.96.88.1     255.255.0.0     UG    0      0        0 eth0 === Pointing APP_MGMT : Vlan60
-169.145.0.0     100.96.88.1     255.255.0.0     UG    0      0        0 eth0 === Pointing APP_MGMT : Vlan60
+100.127.0.0     100.96.88.1     255.255.0.0     UG    0      0        0 eth0 ===👉 Pointing APP_MGMT : INFRA= Vlan60 on HA_CORE
+147.204.0.0     100.96.88.1     255.255.0.0     UG    0      0        0 eth0 ===👉 Pointing APP_MGMT : INFRA= Vlan60 on HA_CORE
+169.145.0.0     100.96.88.1     255.255.0.0     UG    0      0        0 eth0 ===👉 Pointing APP_MGMT : INFRA= Vlan60 on HA_CORE
 172.16.0.0      192.168.12.1    255.240.0.0     UG    0      0        0 eth2
 192.168.0.0     192.168.12.1    255.255.0.0     UG    0      0        0 eth2
 192.168.12.0    0.0.0.0         255.255.255.0   U     0      0        0 eth2
@@ -196,15 +196,15 @@ vxlan vlan 914 vni 10914
 vxlan vlan 900 vni 10900
 vxlan vrf INFRA vni 9150000
 ``` 
-## The Five Key Components
-### Component 1 — Customer VM
+## 🔴The Five Key Components
+### 🟢Component 1 — Customer VM
 The actual SAP workload server. Has TWO network interfaces with completely different purposes:
 • eth2 (Customer VLAN 192.168.12.0/24): All routable traffic — internet, on-prem, infra. Default gateway is HA-Core
 VGW X.X.X.1 .This is where all application traffic flows.
 
 • eth1 (Storage VLAN 100.64.122.0/24): — packets cannot be routed
 
-### Component 2 — HA-Core (High Availability Core Router/Switch)
+### 🟢Component 2 — HA-Core (High Availability Core Router/Switch)
 The HA-Core is the L3 backbone and the SINGLE routing policy enforcement point in SAP HEC. It is an Arista switch
 cluster — four nodes (01a X.X.X.2, 01b X.X.X.3, 01c X.X.X.4, 01d X.X.X.5) connected to 4 Arista Spine(11,12,13,14) switches. all sharing VIP .1 via VARP. 
 Every routing decision goes through HA-Core. It runs separate VRF instances per customer (VRF CUSTOMER_0004 for
@@ -212,7 +212,7 @@ OGV) plus the shared INFRA VRF for SAP management traffic.
 
 👉 Think of HA‑Core as: A 4‑lane traffic control center. Always available, always routing
 
-### Component 3 — CGS (Customer Gateway Server)
+### 🟢Component 3 — CGS (Customer Gateway Server)
 The CGS is a virtual Intel Xeon Linux server that is uniquely multi-homed across THREE network domains.
 CGS runs Active/Standby (CGS-A and CGS-B) with a shared VIP (.254). All routing tables — both in VMs and in
 HA-Core — always point to .254, making failover completely transparent and requiring zero reconfiguration.
@@ -223,12 +223,12 @@ Storage network (eth1)
 
 👉 Think of CGS as: A triple‑door gateway that connects all isolated networks safely
 
-### Component 4 — F5 BIG-IP
+### 🟢Component 4 — F5 BIG-IP
 The F5 handles ALL internet traffic and is the SINGLE SNAT point. Each customer gets a dedicated SNAT IP pool —
 OGV traffic always appears from OGV's own public IP, never shared with other customers. F5 runs Active/Standby with
 a floating VIP (.249). Failover is transparent to VMs.
 
-### Component 5 — VPN / CWAN Routers
+### 🟢Component 5 — VPN / CWAN Routers
 Connect SAP HEC to the customer's on-premises network. Two redundant paths: VPN Routers using IPSec tunnels
 over internet (standard, flexible), and CWAN Routers using dedicated MPLS or cloud peering circuits (guaranteed SLA,
 lower latency, higher cost). Both paths are used simultaneously for redundancy.
