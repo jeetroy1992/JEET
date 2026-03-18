@@ -300,7 +300,26 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
  • F5 access logs: Is SNAT translation actually occurring?
 
 ```
-## Flow 2 — Customer VM to Infra Networks
+## Flow 2 — Customer VM to Infra Networks(SNAT at VLAN60)
+```mermaid
+flowchart TD
+A([ Customer VM\n192.168.12.11\neth2])
+B([ CGS VIP\n192.168.12.254\nCGS-A eth2: .253\nSAME L2 — direct!])
+C([ CGS eth0\n100.96.94.10\nINFRA-facing interface])
+D([ HA-Core VLAN60\n100.96.88.1\nVRF INFRA\n★ SNAT point ★])
+E([􀀀 Infra Server\n147.204.x.x / 100.127.x.x\n169.145.x.x])
+A -->|"􁶃 explicit route\n147.204.0.0/16 → .254\nBYPASSES HA-Core!"| B
+B -->|"􁶄 CGS routing\n147.204.x.x → 100.96.88.1\nvia eth0"| C
+C -->|"􁶅 enters\nINFRA VRF"| D
+D -->|"􁶆 SNAT\nsrc: 192.168.12.11\n→ MGMT IP 100.96.88.x\ninfra sees only MGMT IP"| E
+E -->|"􁶇 reply to MGMT IP\nreverse SNAT\n→ CGS eth0 → eth2 → VM"| A
+style A fill:#1a3a5c,color:#fff
+style B fill:#3a1a1a,color:#fff
+style C fill:#3a1a1a,color:#fff
+style D fill:#1a4a2e,color:#fff
+style E fill:#4a3a1a,color:#fff
+```
+
 ```java
 c5353614@hec15v015742:~> route -n
 Kernel IP routing table
@@ -318,6 +337,80 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 172.16.0.0      192.168.12.1    255.240.0.0     UG    0      0        0 eth2
 192.168.0.0     192.168.12.1    255.255.0.0     UG    0      0        0 eth2
 192.168.12.0    0.0.0.0         255.255.255.0   U     0      0        0 eth2
+```
+## Flow 3 — VM to On-Premises (No SNAT, via VPN)
+```mermaid
+flowchart TD
+A([ Customer VM\n192.168.12.11])
+B([ HA-Core\nVRF CUSTOMER_0191\n192.168.12.1])
+C([ CGS VIP .254\nCGS-A eth2])
+D([ VPN Router\nVTEP: 198.19.249.128\nVNI: 3151910\nIKEv2/IPSec])
+E([ Customer On-Prem\n192.168.1.0/24\n192.168.16.0/24\n192.168.19.0/24])
+A -->|"􁶃 default route\n→ HA-Core .1\nno explicit RFC route on VM"| B
+B -->|"􁶄 EVPN learned routes\n192.168.1.0/24 via VTEP\n→ VPN Router directly"| D
+B -->|"􁶅 OR static route\nRFC → CGS .254"| C
+C -->|"􁶆 CGS routing\nRFC → HA-Core .1\nvia eth2"| B
+D -->|"􁶇 IPSec tunnel\n★ NO SNAT ★\nReal VM IP preserved"| E
+E -->|"􁶈 return\nreal VM IP visible\non-prem FW allows"| D
+D -->|"􁶉 decrypt\n→ HA-Core → VM"| A
+style A fill:#1a3a5c,color:#fff
+style B fill:#1a4a2e,color:#fff
+style C fill:#3a1a1a,color:#fff
+style D fill:#4a2a1a,color:#fff
+style E fill:#2a2a4a,color:#fff
+```
+## Flow 4 Infra Server to VM (Inbound via Checkpoint FW)
+```mermaid
+flowchart TD
+A([􀀀 Infra Server\n147.204.x.x])
+B([ sw-fwt Switches\nL2 fabric\nno routing])
+C([ Checkpoint Firewall\nMandatory inspection\nAllow / Deny / Log])
+D([ HA-Core VLAN914\n10.255.240.18\ndesc: HEC15-FWTRANS\nVRF INFRA])
+E([ HA-Core VLAN60\n100.96.88.1\nVRF INFRA\nreverse SNAT])
+F([ CGS eth0\n100.96.94.10])
+G([ Customer VM\n192.168.12.11])
+A -->|"􁶃 normal\ninfra routing"| B
+B -->|"􁶄 L2 forward\nto FW"| C
+C -->|"􁶅 policy check\nALLOW → forward\nDENY → DROP + alert"| D
+D -->|"􁶆 VRF INFRA\ninternal routing\nsame VRF!"| E
+E -->|"􁶇 reverse SNAT\nMGMT IP → VM IP\n→ CGS eth0"| F
+F -->|"􁶈 CGS bridges\neth0 → eth2\nCustomer VLAN"| G
+style A fill:#4a3a1a,color:#fff
+style B fill:#2a2a2a,color:#fff
+style C fill:#4a1a1a,color:#fff
+style D fill:#1a4a2e,color:#fff
+style E fill:#1a4a2e,color:#fff
+style F fill:#3a1a1a,color:#fff
+style G fill:#1a3a5c,color:#fff
+```
+## 🔴VLAN60 vs VLAN914 Relationship
+```mermaid
+flowchart LR
+subgraph CUSTOMER_VRF ["VRF CUSTOMER_0191"]
+VM([ VM\n192.168.12.11])
+CGS_ETH2([CGS eth2\n.253/.254])
+end
+subgraph INFRA_VRF ["VRF INFRA — HA-Core"]
+V60([VLAN60\n100.96.88.1\nAPP-MGMT\nSNAT point])
+V914([VLAN914\n10.255.240.18\nFWTRANS\nFW uplink])
+end
+subgraph OUTSIDE ["Outside"]
+FW([ Checkpoint FW])
+INFRA([􀀀 Infra Server\n147.204.x.x])
+CGS_ETH0([CGS eth0\n100.96.94.10])
+end
+VM -->|"infra traffic\ndirect L2"| CGS_ETH2
+CGS_ETH2 -->|"CGS eth0\nroutes here"| CGS_ETH0
+CGS_ETH0 -->|"OUTBOUND\nVM → Infra"| V60
+V60 -->|"SNAT +\nroute"| INFRA
+FW -->|"INBOUND\nInfra → VM"| V914
+V914 -->|"VRF INFRA\nrouting"| V60
+V60 -->|"reverse SNAT\n→ CGS eth0"| CGS_ETH0
+CGS_ETH0 -->|"CGS bridges\neth0 → eth2"| CGS_ETH2
+CGS_ETH2 --> VM
+style CUSTOMER_VRF fill:#1a3a5c,color:#fff
+style INFRA_VRF fill:#1a4a2e,color:#fff
+style OUTSIDE fill:#3a2a1a,color:#fff
 ```
 # 📘 Service & Application Ports Reference
 
