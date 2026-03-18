@@ -267,7 +267,6 @@ flowchart TD
   style C fill:#4a2a1a,color:#fff
   style D fill:#2a1a4a,color:#fff
 
-
 ### Step 1 — VM sends packet:
 VM (192.168.12.11) sends packet dst=8.8.8.8. Kernel routing: 0.0.0.0/0 ® gateway 192.168.12.1 via eth2. Packet exits
 eth2 toward HA-Core. The VM has NO specific route for 8.8.8.8, so the default catches it.
