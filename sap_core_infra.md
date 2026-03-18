@@ -6,7 +6,7 @@ own VRF (Virtual Routing and Forwarding) on the HA-Core router. A VRF is a compl
 one physical device — two customers on the same HA-Core are completely invisible to each other. This is the
 foundation of SAP HEC multi-tenancy.
 
-Below is the example of HEC15-Customer-OGV-2191
+➡️ Below is the example of HEC15-Customer-OGV-2191
 - Production network: 192.168.12.0/24
 - Storage network: 100.104.227.0/24
 
@@ -35,7 +35,7 @@ Below is the example of HEC15-Customer-OGV-2191
 | HA-Core VLAN900    | 10.255.240.17   | NW-MGMT  |
 
 
-Lets look at the customer configuration on HA-CORE:
+### ➡️ Lets look at the customer configuration on HA-CORE:
 ```java
 vlan 2191
    name HEC15-CUSTOMER_0191-OGV
@@ -67,7 +67,7 @@ interface Vlan2191
    ip access-group 2300 in
    ip virtual-router address 100.104.227.1
 ```
-Lets look at the customer configuration on VM- hec15v015744:
+### ➡️ Lets look at the customer configuration on VM- hec15v015744:
 ```java
 c5353614@hec15v015744:~> ip addr
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
@@ -97,7 +97,7 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 192.168.12.0    0.0.0.0         255.255.255.0   U     0      0        0 eth2   
 
 ```
-Lets look at the customer configuration on CGS VM:
+### ➡️ Lets look at the customer configuration on CGS VM:
 ```java
 c5353614@hec15v015742:~> route -n
 Kernel IP routing table
@@ -149,7 +149,7 @@ lo        Link encap:Local Loopback
           collisions:0 txqueuelen:1000
           RX bytes:12163825137 (11600.3 Mb)  TX bytes:12163825137 (11600.3 Mb)
 ```
-Lets look at the configuration on INFRA:
+### ➡️ Lets look at the configuration on INFRA:
 ```java
 interface Vlan60
    description ->HEC15-APP-MGMT-01
