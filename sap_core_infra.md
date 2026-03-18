@@ -60,10 +60,16 @@ router bgp 64115.10999
       route-target import evpn 15:3191
       route-target export evpn 15:2191
       redistribute connected
-!
-Lets look at the customer configuration on Storage router :
+```
+### ➡️Lets look at the customer configuration on Storage routers :
+```java
 interface Vlan2191
-   ip address 100.104.227.2/24 ( another router we have 100.104.227.3/24)
+   ip address 100.104.227.2/24
+   ip access-group 2300 in
+   ip virtual-router address 100.104.227.1
+
+interface Vlan2191
+   ip address 100.104.227.3/24
    ip access-group 2300 in
    ip virtual-router address 100.104.227.1
 ```
