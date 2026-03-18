@@ -6,32 +6,35 @@ own VRF (Virtual Routing and Forwarding) on the HA-Core router. A VRF is a compl
 one physical device — two customers on the same HA-Core are completely invisible to each other. This is the
 foundation of SAP HEC multi-tenancy.
 
-Below is the example of CID: PMS
+Below is the example of HEC15-Customer-OGV-2191
+Production network: 192.168.12.0/24
+Storage network: 100.104.227.0/24
+.sap.secretosdelagua.com  192.168.12.11
 
 | Component           | Key IP          | Role / Notes                                      |
 |---------------------|-----------------|---------------------------------------------------|
-| Customer VM eth2    | 10.67.247.11    | CID-PMS Main interface — all routable traffic            |
-| Customer VM eth1    | 100.64.122.15   | CID-PMS Storage only — L2, no routing                    |
-| HA-Core VGW         | 10.67.247.1     | VARP shared GW — all 4 HA-Cores respond          |
-| HA-Core 01a         | 10.67.247.2     | CID-PMS example — unique SVI IP, VARP VIP .1         |
-| HA-Core 01b         | 10.67.247.3     | CID-PMS example — unique SVI IP, VARP VIP .1         |
-| HA-Core 01c         | 10.67.247.4     | CID-PMS example — unique SVI IP, VARP VIP .1         |
-| HA-Core 01d         | 10.67.247.5     | CID-PMS example — unique SVI IP, VARP VIP .1         |
-| CGS VIP             | 10.67.247.254   | CID-PMS CGS Floating IP          |
-| CGS-A (ex.Active)   | 10.67.247.253   | CID-PMS Processes all live traffic                       |
-| CGS-B (ex.Standby)  | 10.67.247.252   | CID-PMS Hot spare — CGS-A failure takeover               |
-| F5 VIP              | 10.67.247.249   | CID-PMS Floating internet LB IP                          |
-| F5 SELF IP          | 10.67.247.250   | CID-PMS Self f5 LB IP                          |
-| F5 SELF IP          | 10.67.247.251   | CID-PMS Self f5 LB IP                          |
-| DNS HOST      | 157.133.120.173 | CID-PMS HEC01-NW-INTERNET : dedicated SNAT 
-| CGS INFRA iface     | 198.18.27.146   | CID-PMS CGS eth0 — bridge into VRF INFRA                 |                               |
+| hec15v015744 VM: eth2    | 192.168.12.11   | CID-OGV Main interface — all routable traffic            |
+| Customer VM eth1    | 100.64.122.15   | CID-OGV Storage only — L2, no routing                    |
+| HA-Core VGW         | 192.168.12.1     | VARP shared GW — all 4 HA-Cores respond          |
+| HA-Core 01a         | 192.168.12.2     | CID-OGV example — unique SVI IP, VARP VIP .1         |
+| HA-Core 01b         | 192.168.12.3     | CID-OGV example — unique SVI IP, VARP VIP .1         |
+| HA-Core 01c         | 192.168.12.4     | CID-OGV example — unique SVI IP, VARP VIP .1         |
+| HA-Core 01d         | 192.168.12.5     | CID-OGV example — unique SVI IP, VARP VIP .1         |
+| CGS VIP             | 192.168.12.254   | CID-OGV CGS Floating IP          |
+| CGS-A (ex.Active)   | 192.168.12.253   | CID-OGV Processes all live traffic                       |
+| CGS-B (ex.Standby)  | 192.168.12.252   | CID-OGV Hot spare — CGS-A failure takeover               |
+| F5 VIP              | 192.168.12.249   | CID-OGV Floating internet LB IP                          |
+| F5 SELF IP          | 192.168.12.250   | CID-OGV Self f5 LB IP                          |
+| F5 SELF IP          | 192.168.12.251   | CID-OGV Self f5 LB IP                          |
+| DNS HOST      | 157.133.120.173 | CID-OGV HEC15-NW-INTERNET : dedicated SNAT 
+| CGS INFRA iface     | 198.18.27.146   | CID-OGV CGS eth0 — bridge into VRF INFRA                 |                               |
 | HA-Core VLAN60      | 198.18.24.1     |  INFRA VRF gateway + SNAT point  |
 | HA-Core VLAN914     | 198.19.252.34   | Dedicated Checkpoint FW uplink  |
 
 ## The Five Key Components
 ### Component 1 — Customer VM
 The actual SAP workload server. Has TWO network interfaces with completely different purposes:
-• eth2 (Customer VLAN 10.67.247.0/24): All routable traffic — internet, on-prem, infra. Default gateway is HA-Core
+• eth2 (Customer VLAN 192.168.12.0/24): All routable traffic — internet, on-prem, infra. Default gateway is HA-Core
 VGW X.X.X.1 .This is where all application traffic flows.
 
 • eth1 (Storage VLAN 100.64.122.0/24): — packets cannot be routed
@@ -40,7 +43,7 @@ VGW X.X.X.1 .This is where all application traffic flows.
 The HA-Core is the L3 backbone and the SINGLE routing policy enforcement point in SAP HEC. It is an Arista switch
 cluster — four nodes (01a X.X.X.2, 01b X.X.X.3, 01c X.X.X.4, 01d X.X.X.5) connected to 4 Arista Spine(11,12,13,14) switches. all sharing VIP .1 via VARP. 
 Every routing decision goes through HA-Core. It runs separate VRF instances per customer (VRF CUSTOMER_0004 for
-PMS) plus the shared INFRA VRF for SAP management traffic. 
+OGV) plus the shared INFRA VRF for SAP management traffic. 
 
 👉 Think of HA‑Core as: A 4‑lane traffic control center. Always available, always routing
 
@@ -57,7 +60,7 @@ Storage network (eth1)
 
 ### Component 4 — F5 BIG-IP
 The F5 handles ALL internet traffic and is the SINGLE SNAT point. Each customer gets a dedicated SNAT IP pool —
-PMS traffic always appears from PMS's own public IP, never shared with other customers. F5 runs Active/Standby with
+OGV traffic always appears from OGV's own public IP, never shared with other customers. F5 runs Active/Standby with
 a floating VIP (.249). Failover is transparent to VMs.
 
 ### Component 5 — VPN / CWAN Routers
@@ -77,29 +80,29 @@ to default route => F5
 ## Flow 1 — Customer VM to Internet (HTTP/HTTPS)
 
 ### Step 1 — VM sends packet:
-VM (10.67.247.11) sends packet dst=8.8.8.8. Kernel routing: 0.0.0.0/0 ® gateway 10.67.247.1 via eth2. Packet exits
+VM (192.168.12.11) sends packet dst=8.8.8.8. Kernel routing: 0.0.0.0/0 ® gateway 192.168.12.1 via eth2. Packet exits
 eth2 toward HA-Core. The VM has NO specific route for 8.8.8.8, so the default catches it.
 ### Step 2 — HA-Core VRF lookup:
 Packet arrives at HA-Core. Route lookup in VRF CUSTOMER_0004 (not the global table). Infra routes (.254) don't
 match 8.8.8.8. Default in this VRF points to F5 VIP .249. HA-Core forwards to F5.
 ### Step 3 — F5 SNAT:
-Packet hits F5 VIP .249. Active unit (lb-hec01-01, .250) processes it. F5 looks up the SNAT pool for this customer and
-replaces source IP 10.67.247.11 with the dedicated PMS public IP 157.133.120.173. A connection table entry is created: internal
-10.67.247.11:PORT « external PMS_PUBLIC:PORT.
+Packet hits F5 VIP .249. Active unit (lb-HEC15-01, .250) processes it. F5 looks up the SNAT pool for this customer and
+replaces source IP 192.168.12.11 with the dedicated OGV public IP 157.133.120.173. A connection table entry is created: internal
+192.168.12.11:PORT « external OGV_PUBLIC:PORT.
 ### Step 4 — Return traffic:
-Internet response arrives at PMS_PUBLIC IP-157.133.120.173. F5 reverses the NAT (looks up connection table, translates destination
-back to 10.67.247.11) and delivers to the VM. VM receives response normally.
+Internet response arrives at OGV_PUBLIC IP-157.133.120.173. F5 reverses the NAT (looks up connection table, translates destination
+back to 192.168.12.11) and delivers to the VM. VM receives response normally.
 
-> ssh hec01v064830.rot
+> ssh HEC15v064830.rot
 - Destination Gateway Genmask Iface Notes
- 0.0.0.0 10.67.247.1 0.0.0.0 eth2 ¬ default — internet hits this
- 10.67.247.0 0.0.0.0 255.255.255.0 eth2 ¬ connected route
- 100.127.0.0 10.67.247.254 255.255.0.0 eth2 ¬ infra ® CGS 
- 147.204.0.0 10.67.247.254 255.255.0.0 eth2 ¬ infra ® CGS
- 169.145.0.0 10.67.247.254 255.255.0.0 eth2 ¬ infra ® CGS
+ 0.0.0.0 192.168.12.1 0.0.0.0 eth2 ¬ default — internet hits this
+ 192.168.12.0 0.0.0.0 255.255.255.0 eth2 ¬ connected route
+ 100.127.0.0 192.168.12.254 255.255.0.0 eth2 ¬ infra ® CGS 
+ 147.204.0.0 192.168.12.254 255.255.0.0 eth2 ¬ infra ® CGS
+ 169.145.0.0 192.168.12.254 255.255.0.0 eth2 ¬ infra ® CGS
 
  Troubleshooting:
- • VM: ping 10.67.247.1 — HA-Core gateway reachable?
+ • VM: ping 192.168.12.1 — HA-Core gateway reachable?
  • VM: traceroute 8.8.8.8 — first hop .1 (HA-Core)? Second hop .249 (F5)?
  • F5: Is VIP .249 up? Is SNAT pool configured for this customer VRF?
  • F5 access logs: Is SNAT translation actually occurring?
@@ -112,11 +115,11 @@ back to 10.67.247.11) and delivers to the VM. VM receives response normally.
  147.204.0.0 198.18.24.1 255.255.0.0 eth0 Infra ® HA-Core INFRA VRF
  169.145.0.0 198.18.24.1 255.255.0.0 eth0 Infra ® HA-Core INFRA VRF
  198.18.24.0 0.0.0.0 255.255.248.0 eth0 Connected (INFRA range)
- 10.67.247.0 0.0.0.0 255.255.255.0 eth2 Connected (Customer VLAN)
- 10.0.0.0 10.67.247.1 255.0.0.0 eth2 RFC On-Prem ® HA-Core
- 172.16.0.0 10.67.247.1 255.240.0.0 eth2 RFC On-Prem ® HA-Core
- 192.168.0.0 10.67.247.1 255.255.0.0 eth2 RFC On-Prem ® HA-Core
- 0.0.0.0 10.67.247.249 0.0.0.0 eth2 Default ® F5 VIP (Internet)
+ 192.168.12.0 0.0.0.0 255.255.255.0 eth2 Connected (Customer VLAN)
+ 10.0.0.0 192.168.12.1 255.0.0.0 eth2 RFC On-Prem ® HA-Core
+ 172.16.0.0 192.168.12.1 255.240.0.0 eth2 RFC On-Prem ® HA-Core
+ 192.168.0.0 192.168.12.1 255.255.0.0 eth2 RFC On-Prem ® HA-Core
+ 0.0.0.0 192.168.12.249 0.0.0.0 eth2 Default ® F5 VIP (Internet)
 
 # 📘 Service & Application Ports Reference
 
