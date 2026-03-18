@@ -30,10 +30,13 @@ Below is the example of HEC15-Customer-OGV-2191
 | F5 SELF IP          | 192.168.12.251   | CID-OGV Self f5 LB IP                          |
 | DNS HOST            | 157.133.65.93    | CID-OGV HEC15-NW-INTERNET : dedicated SNAT 
 | CGS INFRA iface     | 198.18.27.146   | CID-OGV CGS eth0 — bridge into VRF INFRA                 |                               |
-| HA-Core VLAN60      | 100.96.88.1     |  INFRA VRF gateway + SNAT point  |
+| HA-Core VLAN60      | 100.96.88.1     |  APP-MGMT : INFRA VRF gateway + SNAT point  |
 | HA-Core VLAN914     | 10.255.240.17   | Dedicated Checkpoint FW uplink  |
+| HA-Core VLAN900    | 10.255.240.17   | NW-MGMT  |
+
 
 Lets look at the customer configuration on HA-CORE:
+```java
 vlan 2191
    name HEC15-CUSTOMER_0191-OGV
 !
@@ -63,9 +66,9 @@ interface Vlan2191
    ip address 100.104.227.2/24 ( another router we have 100.104.227.3/24)
    ip access-group 2300 in
    ip virtual-router address 100.104.227.1
-
+```
 Lets look at the customer configuration on VM- hec15v015744:
-
+```java
 c5353614@hec15v015744:~> ip addr
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
@@ -93,9 +96,9 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 169.145.0.0     192.168.12.254  255.255.0.0     UG    0      0        0 eth2 ====>INFRA routes Pointing towards customer CGS
 192.168.12.0    0.0.0.0         255.255.255.0   U     0      0        0 eth2   
 
-
+```
 Lets look at the customer configuration on CGS VM:
-
+```java
 c5353614@hec15v015742:~> route -n
 Kernel IP routing table
 Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
@@ -145,9 +148,9 @@ lo        Link encap:Local Loopback
           TX packets:9894842 errors:0 dropped:0 overruns:0 carrier:0
           collisions:0 txqueuelen:1000
           RX bytes:12163825137 (11600.3 Mb)  TX bytes:12163825137 (11600.3 Mb)
-
+```
 Lets look at the configuration on INFRA:
-
+```java
 interface Vlan60
    description ->HEC15-APP-MGMT-01
    no autostate
@@ -192,7 +195,7 @@ vxlan vlan 60 vni 10060
 vxlan vlan 914 vni 10914
 vxlan vlan 900 vni 10900
 vxlan vrf INFRA vni 9150000
-  
+``` 
 ## The Five Key Components
 ### Component 1 — Customer VM
 The actual SAP workload server. Has TWO network interfaces with completely different purposes:
