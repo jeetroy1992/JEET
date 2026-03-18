@@ -412,6 +412,114 @@ style CUSTOMER_VRF fill:#1a3a5c,color:#fff
 style INFRA_VRF fill:#1a4a2e,color:#fff
 style OUTSIDE fill:#3a2a1a,color:#fff
 ```
+
+## Flow 6 — CGS Active/Standby + 3 Interface Architecture
+```mermaid
+flowchart TD
+subgraph HA_PAIR ["CGS Active/Standby Cluster"]
+VIP([ CGS VIP\n192.168.12.254\nfloating — always use this])
+CGSA([CGS-A ACTIVE\n192.168.12.253\nhec15v015742])
+CGSB([CGS-B STANDBY\n192.168.12.252])
+VIP -->|"owned by active"| CGSA
+CGSA <-->|"keepalives\nfailover < 5s"| CGSB
+end
+subgraph INTERFACES ["CGS-A Interfaces"]
+ETH2([eth2\n192.168.12.253\nCustomer VLAN\nroutable ])
+ETH0([eth0\n100.96.94.10\nINFRA VRF\nroutable ])
+ETH1([eth1\n100.104.x.x\nStorage VLAN\nL2 only ])
+end
+CGSA --> ETH2
+CGSA --> ETH0
+CGSA --> ETH1
+ETH2 -->|"VM traffic\nOn-Prem\nInternet via F5"| CUST([Customer VLAN\n192.168.12.0/24])
+ETH0 -->|"Infra traffic\nvia VLAN60"| INFRA([VRF INFRA\nVLAN60: 100.96.88.1])
+ETH1 -->|"Block storage\nno routing\nno gateway"| STR([Storage\n100.104.227.0/24])
+style HA_PAIR fill:#1a3a5c,color:#fff
+style INTERFACES fill:#1a4a2e,color:#fff
+```
+## Flow 7 — HA-Core 4-Node Active/Active VARP + EVPN
+```mermaid
+flowchart TD
+subgraph SPINES ["4 Spine Switches — IP Underlay ECMP"]
+SP1([Spine-01])
+SP2([Spine-02])
+SP3([Spine-03])
+SP4([Spine-04])
+end
+subgraph HA_CORES ["HA-Core — 4 Node Active/Active VARP"]
+C1([HA-Core 01a\n192.168.12.2\nVARP .1\nVNI 3151910])
+C2([HA-Core 01b\n192.168.12.3\nVARP .1\nVNI 3151910])
+C3([HA-Core 01c\n192.168.12.4\nVARP .1\nVNI 3151910])
+C4([HA-Core 01d\n192.168.12.5\nVARP .1\nVNI 3151910])
+C1 <-->|"BGP EVPN\nfull mesh\n6 sessions"| C2
+C1 <--> C3
+C1 <--> C4
+C2 <--> C3
+C2 <--> C4
+C3 <--> C4
+end
+VM([ Customer VMs\nVLAN 2191\n192.168.12.0/24\nGW: 192.168.12.1 VARP])
+VM -->|"ARP for .1\nall 4 reply\nsame virtual MAC"| C1
+VM --> C2
+VM --> C3
+VM --> C4
+C1 & C2 & C3 & C4 <--> SP1 & SP2 & SP3 & SP4
+style SPINES fill:#2a2a4a,color:#fff
+CGSA --> ETH2
+CGSA --> ETH0
+CGSA --> ETH1
+ETH2 -->|"VM traffic\nOn-Prem\nInternet via F5"| CUST([Customer VLAN\n192.168.12.0/24])
+ETH0 -->|"Infra traffic\nvia VLAN60"| INFRA([VRF INFRA\nVLAN60: 100.96.88.1])
+ETH1 -->|"Block storage\nno routing\nno gateway"| STR([Storage\n100.104.227.0/24])
+style HA_PAIR fill:#1a3a5c,color:#fff
+style INTERFACES fill:#1a4a2e,color:#fff
+style HA_CORES fill:#1a4a2e,color:#fff
+```
+## Flow 8 — Complete Master Flow (All Directions)
+```mermaid
+flowchart TD
+INTERNET([ INTERNET])
+ONPREM([ On-Prem\n192.168.1.0/24\n192.168.16.0/24\n192.168.19.0/24])
+INFRASRV([􀀀 Infra Server\n147.204.x.x])
+F5([ F5 BIG-IP\nVIP: 192.168.12.249\nSNAT per customer])
+VPN([ VPN Router\nVTEP: 198.19.249.128\nIKEv2/IPSec])
+FW([ Checkpoint FW\nMandatory inbound inspection])
+subgraph HACORE ["HA-Core — VRF CUSTOMER_0191 + VRF INFRA"]
+HACUST([VRF CUSTOMER_0191\nVARP: 192.168.12.1\ndefault → F5 .249\nRFC → CGS .254\nOn-V60([VLAN60\n100.96.88.1\nVRF INFRA\nSNAT point])
+V914([VLAN914\n10.255.240.18\nVRF INFRA\nFW uplink])
+end
+subgraph CGS ["CGS Cluster — 3 Interface Bridge"]
+CGSV([VIP .254])
+ETH2([eth2 — Customer])
+ETH0([eth0 — INFRA])
+ETH1([eth1 — Storage L2])
+end
+VM([ Customer VM\n192.168.12.11])
+STR([ Storage\n100.104.227.x\nL2 only])
+%% Internet flow
+VM -->|"􁶃 Internet\ndefault → .1"| HACUST
+HACUST -->|"􁶄 → F5"| F5
+F5 <-->|"􁶅 SNAT ↔ Internet"| INTERNET
+%% Infra outbound
+VM -->|"􁶆 Infra\ndirect L2 → CGS .254"| CGSV
+CGSV --> ETH2 --> ETH0
+ETH0 -->|"􁶇 → VLAN60"| V60
+V60 <-->|"􁶈 SNAT ↔ Infra"| INFRASRV
+%% On-Prem
+HACUST -->|"􁶉 On-Prem\nEVPN route → VTEP"| VPN
+VPN <-->|"􁶊 IPSec\nNO SNAT"| ONPREM
+%% Inbound from Infra
+INFRASRV -->|"􁶋 Inbound\nvia sw-fwt"| FW
+FW -->|"􁶌 inspected\n→ VLAN914"| V914
+V914 -->|"􁶍 VRF INFRA\nrouting"| V60
+V60 -->|"􁶎 reverse SNAT\n→ CGS eth0"| ETH0
+ETH0 --> ETH2 --> CGSV
+CGSV -->|"􁶏 → VM"| VM
+%% Storage
+VM -->|"Storage\neth1 L2 only"| ETH1
+ETH1 --- STR
+style HACORE fill:#1a4a2e,color:#fff
+```
 # 📘 Service & Application Ports Reference
 
 ## 🔐 Standard Service Ports
