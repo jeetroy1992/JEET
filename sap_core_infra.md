@@ -7,14 +7,13 @@ one physical device — two customers on the same HA-Core are completely invisib
 foundation of SAP HEC multi-tenancy.
 
 Below is the example of HEC15-Customer-OGV-2191
-Production network: 192.168.12.0/24
-Storage network: 100.104.227.0/24
-.sap.secretosdelagua.com  192.168.12.11
+- Production network: 192.168.12.0/24
+- Storage network: 100.104.227.0/24
 
 | Component           | Key IP          | Role / Notes                                      |
 |---------------------|-----------------|---------------------------------------------------|
+| hec15v015744 VM eth1    | 100.104.227.15/24 | CID-OGV Storage only — L2, no routing   |
 | hec15v015744 VM: eth2    | 192.168.12.11   | CID-OGV Main interface — all routable traffic            |
-| Customer VM eth1    | 100.64.122.15   | CID-OGV Storage only — L2, no routing                    |
 | HA-Core VGW         | 192.168.12.1     | VARP shared GW — all 4 HA-Cores respond          |
 | HA-Core 01a         | 192.168.12.2     | CID-OGV example — unique SVI IP, VARP VIP .1         |
 | HA-Core 01b         | 192.168.12.3     | CID-OGV example — unique SVI IP, VARP VIP .1         |
@@ -26,11 +25,105 @@ Storage network: 100.104.227.0/24
 | F5 VIP              | 192.168.12.249   | CID-OGV Floating internet LB IP                          |
 | F5 SELF IP          | 192.168.12.250   | CID-OGV Self f5 LB IP                          |
 | F5 SELF IP          | 192.168.12.251   | CID-OGV Self f5 LB IP                          |
-| DNS HOST      | 157.133.120.173 | CID-OGV HEC15-NW-INTERNET : dedicated SNAT 
+| DNS HOST            | 157.133.65.93    | CID-OGV HEC15-NW-INTERNET : dedicated SNAT 
 | CGS INFRA iface     | 198.18.27.146   | CID-OGV CGS eth0 — bridge into VRF INFRA                 |                               |
-| HA-Core VLAN60      | 198.18.24.1     |  INFRA VRF gateway + SNAT point  |
-| HA-Core VLAN914     | 198.19.252.34   | Dedicated Checkpoint FW uplink  |
+| HA-Core VLAN60      | 100.96.88.1     |  INFRA VRF gateway + SNAT point  |
+| HA-Core VLAN914     | 10.255.240.17   | Dedicated Checkpoint FW uplink  |
 
+Lets look at the customer configuration on HA-CORE:
+vlan 2191
+   name HEC15-CUSTOMER_0191-OGV
+!
+vrf instance CUSTOMER_0191
+   description HEC15-CUSTOMER_0191-OGV
+!
+interface Vlan2191
+   description HEC15-CUSTOMER_0191-OGV
+   no autostate
+   vrf CUSTOMER_0191
+   ip address 192.168.12.2/24
+   ip virtual-router address 192.168.12.1
+interface Vxlan1
+vxlan vlan 2191 vni 2191000
+vxlan vrf CUSTOMER_0191 vni 3151910
+!
+router bgp 64115.10999
+   vrf CUSTOMER_0191
+      rd 15:2191
+      route-target import evpn 15:2191
+      route-target import evpn 15:3191
+      route-target export evpn 15:2191
+      redistribute connected
+!
+
+
+
+Lets look at the customer configuration on VM- hec15v015744:
+
+c5353614@hec15v015744:~> ip addr
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+2: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+    link/ether 00:50:56:8f:57:aa brd ff:ff:ff:ff:ff:ff
+    inet 100.104.227.15/24 brd 100.104.227.255 scope global eth1
+       valid_lft forever preferred_lft forever
+3: eth2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+    link/ether 00:50:56:8f:0e:82 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.12.11/24 brd 192.168.12.255 scope global eth2
+       valid_lft forever preferred_lft forever
+    inet 192.168.12.12/24 brd 192.168.12.255 scope global secondary eth2:vhogvfr
+       valid_lft forever preferred_lft forever
+
+
+ip routing vrf INFRA
+ip route vrf INFRA 0.0.0.0/0 Vlan914 10.255.240.28
+ip route vrf INFRA 100.104.0.0/15 Vlan922 10.255.240.81
+ip route vrf INFRA 100.127.109.184/29 Vlan914 10.255.240.28
+ip route vrf INFRA 198.19.224.16/28 Vlan900 198.19.238.8
+!
+interface Vxlan1
+vxlan vlan 60 vni 10060
+vxlan vlan 914 vni 10914
+vxlan vlan 900 vni 10900
+vxlan vrf INFRA vni 9150000
+   
+!
+interface Vlan60
+   description ->HEC15-APP-MGMT-01
+   no autostate
+   vrf INFRA
+   ip address 100.96.88.2/21
+   ip address 100.124.64.2/19 secondary
+   ip access-group 2500 out
+   ip virtual-router address 100.96.88.1
+   ip virtual-router address 100.124.64.1
+!
+interface Vlan914
+   description ->HEC15-FWTRANS
+   no autostate
+   vrf INFRA
+   ip address 10.255.240.18/28
+   ip virtual-router address 10.255.240.17
+!
+interface Vlan900
+   description ->HEC15-NW-MGMT
+   no autostate
+   vrf INFRA
+   ip address 198.19.238.2/24
+   ip virtual-router address 198.19.238.1
+router bgp 64115.10999
+   vrf INFRA
+      rd 15:900
+      route-target import evpn 15:900
+      route-target import evpn 15:3499
+      route-target import evpn 19:900
+      route-target export evpn 15:900
+      redistribute connected route-map RM-INFRA
+      redistribute static route-map RM-INFRA
+
+  
 ## The Five Key Components
 ### Component 1 — Customer VM
 The actual SAP workload server. Has TWO network interfaces with completely different purposes:
