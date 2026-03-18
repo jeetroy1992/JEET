@@ -19,6 +19,9 @@ Below is the example of HEC15-Customer-OGV-2191
 | HA-Core 01b         | 192.168.12.3     | CID-OGV example — unique SVI IP, VARP VIP .1         |
 | HA-Core 01c         | 192.168.12.4     | CID-OGV example — unique SVI IP, VARP VIP .1         |
 | HA-Core 01d         | 192.168.12.5     | CID-OGV example — unique SVI IP, VARP VIP .1         |
+| Storag VGW         | 100.104.227.1     | VARP shared GW — all 4 HA-Cores respond          |
+| Primary Storage rt  | 100.104.227.2    | CID-OGV example — unique SVI IP, VARP VIP .1         |
+| Secondary storage rt | 100.104.227.3   | CID-OGV example — unique SVI IP, VARP VIP .1         |
 | CGS VIP             | 192.168.12.254   | CID-OGV CGS Floating IP          |
 | CGS-A (ex.Active)   | 192.168.12.253   | CID-OGV Processes all live traffic                       |
 | CGS-B (ex.Standby)  | 192.168.12.252   | CID-OGV Hot spare — CGS-A failure takeover               |
@@ -55,8 +58,11 @@ router bgp 64115.10999
       route-target export evpn 15:2191
       redistribute connected
 !
-
-
+Lets look at the customer configuration on Storage router :
+interface Vlan2191
+   ip address 100.104.227.2/24 ( another router we have 100.104.227.3/24)
+   ip access-group 2300 in
+   ip virtual-router address 100.104.227.1
 
 Lets look at the customer configuration on VM- hec15v015744:
 
@@ -75,21 +81,73 @@ c5353614@hec15v015744:~> ip addr
        valid_lft forever preferred_lft forever
     inet 192.168.12.12/24 brd 192.168.12.255 scope global secondary eth2:vhogvfr
        valid_lft forever preferred_lft forever
+       
+hec15v015744:~> route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.12.1    0.0.0.0         UG    0      0        0 eth2 ====>Pointing towards HA_CORE
+100.104.0.0     100.104.227.1   255.255.255.0   UG    0      0        0 eth1
+100.104.227.0   0.0.0.0         255.255.255.0   U     0      0        0 eth1
+100.127.0.0     192.168.12.254  255.255.0.0     UG    0      0        0 eth2 ====>INFRA routes Pointing towards customer CGS
+147.204.0.0     192.168.12.254  255.255.0.0     UG    0      0        0 eth2 ====>INFRA routes Pointing towards customer CGS
+169.145.0.0     192.168.12.254  255.255.0.0     UG    0      0        0 eth2 ====>INFRA routes Pointing towards customer CGS
+192.168.12.0    0.0.0.0         255.255.255.0   U     0      0        0 eth2   
 
 
-ip routing vrf INFRA
-ip route vrf INFRA 0.0.0.0/0 Vlan914 10.255.240.28
-ip route vrf INFRA 100.104.0.0/15 Vlan922 10.255.240.81
-ip route vrf INFRA 100.127.109.184/29 Vlan914 10.255.240.28
-ip route vrf INFRA 198.19.224.16/28 Vlan900 198.19.238.8
-!
-interface Vxlan1
-vxlan vlan 60 vni 10060
-vxlan vlan 914 vni 10914
-vxlan vlan 900 vni 10900
-vxlan vrf INFRA vni 9150000
-   
-!
+Lets look at the customer configuration on CGS VM:
+
+c5353614@hec15v015742:~> route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.12.249  0.0.0.0         UG    0      0        0 eth2
+10.0.0.0        192.168.12.1    255.0.0.0       UG    0      0        0 eth2
+100.96.64.0     0.0.0.0         255.255.224.0   U     0      0        0 eth0
+100.96.88.0     0.0.0.0         255.255.248.0   U     0      0        0 eth0
+100.104.0.0     100.104.227.1   255.255.255.0   UG    0      0        0 eth1
+100.104.227.0   0.0.0.0         255.255.255.0   U     0      0        0 eth1
+100.124.64.0    0.0.0.0         255.255.224.0   U     0      0        0 eth0
+100.127.0.0     100.96.88.1     255.255.0.0     UG    0      0        0 eth0 === Pointing APP_MGMT : Vlan60
+147.204.0.0     100.96.88.1     255.255.0.0     UG    0      0        0 eth0 === Pointing APP_MGMT : Vlan60
+169.145.0.0     100.96.88.1     255.255.0.0     UG    0      0        0 eth0 === Pointing APP_MGMT : Vlan60
+172.16.0.0      192.168.12.1    255.240.0.0     UG    0      0        0 eth2
+192.168.0.0     192.168.12.1    255.255.0.0     UG    0      0        0 eth2
+192.168.12.0    0.0.0.0         255.255.255.0   U     0      0        0 eth2
+
+c5353614@hec15v015742:~> ifconfig
+eth0      Link encap:Ethernet  HWaddr 00:50:56:8F:D8:0E
+          inet addr:100.96.94.10  Bcast:100.96.95.255  Mask:255.255.248.0
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:26122335 errors:0 dropped:67 overruns:0 frame:0
+          TX packets:25193639 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000
+          RX bytes:8086007417 (7711.4 Mb)  TX bytes:26447240419 (25222.0 Mb)
+
+eth1      Link encap:Ethernet  HWaddr 00:50:56:8F:98:EF
+          inet addr:100.104.227.12  Bcast:100.104.227.255  Mask:255.255.255.0
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:32462113 errors:0 dropped:1577 overruns:0 frame:0
+          TX packets:4766735 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000
+          RX bytes:43713398745 (41688.3 Mb)  TX bytes:12164295767 (11600.7 Mb)
+
+eth2      Link encap:Ethernet  HWaddr 00:50:56:8F:47:1E
+          inet addr:192.168.12.253  Bcast:192.168.12.255  Mask:255.255.255.0
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:50278506 errors:0 dropped:286991 overruns:0 frame:0
+          TX packets:28750968 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000
+          RX bytes:34106558447 (32526.5 Mb)  TX bytes:14761636552 (14077.7 Mb)
+
+lo        Link encap:Local Loopback
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+          RX packets:9894842 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:9894842 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000
+          RX bytes:12163825137 (11600.3 Mb)  TX bytes:12163825137 (11600.3 Mb)
+
+Lets look at the configuration on INFRA:
+
 interface Vlan60
    description ->HEC15-APP-MGMT-01
    no autostate
@@ -122,7 +180,18 @@ router bgp 64115.10999
       route-target export evpn 15:900
       redistribute connected route-map RM-INFRA
       redistribute static route-map RM-INFRA
-
+      
+ip routing vrf INFRA
+ip route vrf INFRA 0.0.0.0/0 Vlan914 10.255.240.28
+ip route vrf INFRA 100.104.0.0/15 Vlan922 10.255.240.81
+ip route vrf INFRA 100.127.109.184/29 Vlan914 10.255.240.28
+ip route vrf INFRA 198.19.224.16/28 Vlan900 198.19.238.8
+!
+interface Vxlan1
+vxlan vlan 60 vni 10060
+vxlan vlan 914 vni 10914
+vxlan vlan 900 vni 10900
+vxlan vrf INFRA vni 9150000
   
 ## The Five Key Components
 ### Component 1 — Customer VM
