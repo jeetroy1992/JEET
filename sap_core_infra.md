@@ -442,7 +442,7 @@ style G fill:#1a3a5c,color:#fff
 flowchart LR
 subgraph CUSTOMER_VRF ["VRF CUSTOMER_0191"]
 VM([ VM\n192.168.12.11])
-CGS_ETH2([CGS eth2\n.253/.254])
+CGS_ETH2([CGS eth2\n.253/.252/.254])
 end
 subgraph INFRA_VRF ["VRF INFRA — HA-Core"]
 V60([VLAN60\n100.96.88.1\nAPP-MGMT\nSNAT point])
