@@ -258,40 +258,50 @@ Packet arrives at HA-Core. Route lookup in VRF CUSTOMER_0004 (not the global tab
 match 8.8.8.8. Default in this VRF points to F5 VIP .249. HA-Core forwards to F5.
 ### Step 3 — F5 SNAT:
 Packet hits F5 VIP .249. Active unit (lb-HEC15-01, .250) processes it. F5 looks up the SNAT pool for this customer and
-replaces source IP 192.168.12.11 with the dedicated OGV public IP 157.133.120.173. A connection table entry is created: internal
+replaces source IP 192.168.12.11 with the dedicated OGV public IP 157.133.65.93. A connection table entry is created: internal
 192.168.12.11:PORT « external OGV_PUBLIC:PORT.
 ### Step 4 — Return traffic:
 Internet response arrives at OGV_PUBLIC IP-157.133.120.173. F5 reverses the NAT (looks up connection table, translates destination
 back to 192.168.12.11) and delivers to the VM. VM receives response normally.
 
-> ssh HEC15v064830.rot
-- Destination Gateway Genmask Iface Notes
- 0.0.0.0 192.168.12.1 0.0.0.0 eth2 ¬ default — internet hits this
- 192.168.12.0 0.0.0.0 255.255.255.0 eth2 ¬ connected route
- 100.127.0.0 192.168.12.254 255.255.0.0 eth2 ¬ infra ® CGS 
- 147.204.0.0 192.168.12.254 255.255.0.0 eth2 ¬ infra ® CGS
- 169.145.0.0 192.168.12.254 255.255.0.0 eth2 ¬ infra ® CGS
+```java
+hec15v015744:~> route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.12.1    0.0.0.0         UG    0      0        0 eth2 ====👉Pointing towards VGW: Vlan2191 on HA_CORE routers
+100.104.0.0     100.104.227.1   255.255.255.0   UG    0      0        0 eth1 ====👉Pointing towards VGW: Vlan2191 on Storage routers
+100.104.227.0   0.0.0.0         255.255.255.0   U     0      0        0 eth1
+100.127.0.0     192.168.12.254  255.255.0.0     UG    0      0        0 eth2 ====👉INFRA routes Pointing towards customer CGS
+147.204.0.0     192.168.12.254  255.255.0.0     UG    0      0        0 eth2 ====👉INFRA routes Pointing towards customer CGS
+169.145.0.0     192.168.12.254  255.255.0.0     UG    0      0        0 eth2 ====👉INFRA routes Pointing towards customer CGS
+192.168.12.0    0.0.0.0         255.255.255.0   U     0      0        0 eth2   
 
- Troubleshooting:
+✔ Troubleshooting:
  • VM: ping 192.168.12.1 — HA-Core gateway reachable?
  • VM: traceroute 8.8.8.8 — first hop .1 (HA-Core)? Second hop .249 (F5)?
  • F5: Is VIP .249 up? Is SNAT pool configured for this customer VRF?
  • F5 access logs: Is SNAT translation actually occurring?
 
+```
 ## Flow 2 — Customer VM to Infra Networks
-
-
- Destination Gateway Genmask Iface Purpose
- 100.127.0.0 198.18.24.1 255.255.0.0 eth0 Infra ® HA-Core INFRA VRF
- 147.204.0.0 198.18.24.1 255.255.0.0 eth0 Infra ® HA-Core INFRA VRF
- 169.145.0.0 198.18.24.1 255.255.0.0 eth0 Infra ® HA-Core INFRA VRF
- 198.18.24.0 0.0.0.0 255.255.248.0 eth0 Connected (INFRA range)
- 192.168.12.0 0.0.0.0 255.255.255.0 eth2 Connected (Customer VLAN)
- 10.0.0.0 192.168.12.1 255.0.0.0 eth2 RFC On-Prem ® HA-Core
- 172.16.0.0 192.168.12.1 255.240.0.0 eth2 RFC On-Prem ® HA-Core
- 192.168.0.0 192.168.12.1 255.255.0.0 eth2 RFC On-Prem ® HA-Core
- 0.0.0.0 192.168.12.249 0.0.0.0 eth2 Default ® F5 VIP (Internet)
-
+```java
+c5353614@hec15v015742:~> route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.12.249  0.0.0.0         UG    0      0        0 eth2 ====👉Pointing towards LoadBalancer VIP: route-domain CUST0191
+10.0.0.0        192.168.12.1    255.0.0.0       UG    0      0        0 eth2
+100.96.64.0     0.0.0.0         255.255.224.0   U     0      0        0 eth0
+100.96.88.0     0.0.0.0         255.255.248.0   U     0      0        0 eth0
+100.104.0.0     100.104.227.1   255.255.255.0   UG    0      0        0 eth1
+100.104.227.0   0.0.0.0         255.255.255.0   U     0      0        0 eth1
+100.124.64.0    0.0.0.0         255.255.224.0   U     0      0        0 eth0
+100.127.0.0     100.96.88.1     255.255.0.0     UG    0      0        0 eth0 ===👉 Pointing APP_MGMT : INFRA= Vlan60 on HA_CORE
+147.204.0.0     100.96.88.1     255.255.0.0     UG    0      0        0 eth0 ===👉 Pointing APP_MGMT : INFRA= Vlan60 on HA_CORE
+169.145.0.0     100.96.88.1     255.255.0.0     UG    0      0        0 eth0 ===👉 Pointing APP_MGMT : INFRA= Vlan60 on HA_CORE
+172.16.0.0      192.168.12.1    255.240.0.0     UG    0      0        0 eth2
+192.168.0.0     192.168.12.1    255.255.0.0     UG    0      0        0 eth2
+192.168.12.0    0.0.0.0         255.255.255.0   U     0      0        0 eth2
+```
 # 📘 Service & Application Ports Reference
 
 ## 🔐 Standard Service Ports
