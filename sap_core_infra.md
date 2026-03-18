@@ -267,19 +267,20 @@ flowchart TD
   style C fill:#4a2a1a,color:#fff
   style D fill:#2a1a4a,color:#fff
 ```
-### Step 1 — VM sends packet:
-VM (192.168.12.11) sends packet dst=8.8.8.8. Kernel routing: 0.0.0.0/0 ® gateway 192.168.12.1 via eth2. Packet exits
-eth2 toward HA-Core. The VM has NO specific route for 8.8.8.8, so the default catches it.
-### Step 2 — HA-Core VRF lookup:
-Packet arrives at HA-Core. Route lookup in VRF CUSTOMER_0004 (not the global table). Infra routes (.254) don't
-match 8.8.8.8. Default in this VRF points to F5 VIP .249. HA-Core forwards to F5.
-### Step 3 — F5 SNAT:
-Packet hits F5 VIP .249. Active unit (lb-HEC15-01, .250) processes it. F5 looks up the SNAT pool for this customer and
-replaces source IP 192.168.12.11 with the dedicated OGV public IP 157.133.65.93. A connection table entry is created: internal
-192.168.12.11:PORT « external OGV_PUBLIC:PORT.
-### Step 4 — Return traffic:
-Internet response arrives at OGV_PUBLIC IP-157.133.120.173. F5 reverses the NAT (looks up connection table, translates destination
-back to 192.168.12.11) and delivers to the VM. VM receives response normally.
+1. **VM 192.168.12.11** → wants to reach **Google 8.8.8.8**  
+   `// VM has no specific route for 8.8.8.8`
+
+2. **VM routing table:** `0.0.0.0/0` → **HA‑Core 192.168.12.1**  
+   `// default route catches everything unknown`
+
+3. **HA‑Core VRF CUSTOMER_0191** → route lookup → default →  
+   **F5 VIP 192.168.12.249**
+
+4. **F5 Active .250** → **SNAT:** `src 192.168.12.11 → OGV Public IP`  
+   `// private IP hidden from internet`
+
+5. **Internet** replies → **F5 reverses SNAT** → **VM receives response**  
+   `// VM never knows it was translated`
 
 ```java
 hec15v015744:~> route -n
