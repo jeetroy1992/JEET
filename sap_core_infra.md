@@ -320,7 +320,23 @@ style C fill:#3a1a1a,color:#fff
 style D fill:#1a4a2e,color:#fff
 style E fill:#4a3a1a,color:#fff
 ```
+1. **VM 192.168.12.11** → wants to reach **Infra 147.204.100.17**  
+   `// explicit route!`
 
+2. **VM routing:** `147.204.0.0/16` → **CGS VIP 192.168.12.254**  
+   `// explicit route; HA‑Core bypassed!`
+
+3. **CGS‑A eth2 .253** receives → CGS routing:  
+   **147.204.x.x → 100.96.88.1 via eth0**
+
+4. **CGS eth0 100.96.94.10** → **HA‑Core VLAN60 100.96.88.1**  
+   `// enters INFRA VRF`
+
+5. **VLAN60** → **SNAT:** `src 192.168.12.11 → MGMT IP 100.96.88.x`  
+   `// VM IP hidden from infra servers`
+
+6. **Infra Server** receives → sees only MGMT IP (not VM IP) → replies →  
+   reverse SNAT → **VM**
 ```java
 c5353614@hec15v015742:~> route -n
 Kernel IP routing table
